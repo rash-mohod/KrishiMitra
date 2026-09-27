@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { supabaseAdmin } from '../config/supabase.js';
+import { ok, fail } from '../utils/http.js';
+const router=Router();
+const map=(n:any)=>({id:n.id,userId:n.user_id,title:n.title,message:n.message,type:n.type,referenceId:n.related_booking_id??undefined,link:n.link??undefined,isRead:!!n.is_read,createdAt:n.created_at});
+router.get('/',requireAuth,async(req:AuthRequest,res)=>{const {data,error}=await supabaseAdmin.from('notifications').select('*').eq('user_id',req.user!.id).order('created_at',{ascending:false});if(error)return fail(res,error.message,500);return ok(res,{notifications:(data??[]).map(map)});});
+router.patch('/:id/read',requireAuth,async(req:AuthRequest,res)=>{const {error}=await supabaseAdmin.from('notifications').update({is_read:true}).eq('id',req.params.id).eq('user_id',req.user!.id);if(error)return fail(res,error.message,400);return ok(res,{});});
+router.patch('/read-all',requireAuth,async(req:AuthRequest,res)=>{const {error}=await supabaseAdmin.from('notifications').update({is_read:true}).eq('user_id',req.user!.id).eq('is_read',false);if(error)return fail(res,error.message,400);return ok(res,{});});
+export default router;
