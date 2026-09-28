@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Headphones, Mail, MapPin, MessageSquare, Phone, Send, ShieldAlert } from 'lucide-react';
+import { Mail, Phone, Send, ShieldAlert } from 'lucide-react';
 
 export const ContactPage: React.FC = () => {
   const { t } = useLanguage();
@@ -17,7 +17,7 @@ export const ContactPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-      
+
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
           {t('contact.badge', '24/7 Kisan Agri-Support')}
@@ -31,7 +31,7 @@ export const ContactPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* Contact Info Cards */}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-xs space-y-2">
@@ -40,8 +40,12 @@ export const ContactPage: React.FC = () => {
                 <Phone className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs text-stone-500 font-medium">{t('contact.helplineLabel', 'Toll-Free Kisan Helpline')}</span>
-                <p className="font-bold text-stone-900 text-sm">1800-420-9900 (Mon - Sun, 6 AM - 10 PM)</p>
+                <span className="text-xs text-stone-500 font-medium">
+                  {t('contact.helplineLabel', 'Toll-Free Kisan Helpline')}
+                </span>
+                <p className="font-bold text-stone-900 text-sm">
+                  1800-120-KRISHI
+                </p>
               </div>
             </div>
           </div>
@@ -52,20 +56,12 @@ export const ContactPage: React.FC = () => {
                 <Mail className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs text-stone-500 font-medium">{t('contact.emailLabel', 'Support & Escrow Desk')}</span>
-                <p className="font-bold text-stone-900 text-sm">support@krishimitra.agri.in</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-xs space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-xs text-stone-500 font-medium">{t('contact.hqLabel', 'AgTech Operations HQ')}</span>
-                <p className="font-bold text-stone-900 text-sm">Krishi Bhavan, Shivaji Nagar, Pune, MH 411005</p>
+                <span className="text-xs text-stone-500 font-medium">
+                  {t('contact.emailLabel', 'Support & Escrow Desk')}
+                </span>
+                <p className="font-bold text-stone-900 text-sm">
+                  support@krishimitra.agri.in
+                </p>
               </div>
             </div>
           </div>
@@ -89,7 +85,9 @@ export const ContactPage: React.FC = () => {
 
           {submitted ? (
             <div className="p-8 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-2">
-              <p className="font-bold text-emerald-900 text-base">{t('contact.successTitle', 'Thank you for contacting Krishi Mitra!')}</p>
+              <p className="font-bold text-emerald-900 text-base">
+                {t('contact.successTitle', 'Thank you for contacting Krishi Mitra!')}
+              </p>
               <p className="text-xs text-emerald-700">
                 {t('contact.successDesc', 'Our district agronomist coordinator will call your mobile number shortly.')}
               </p>
@@ -135,10 +133,18 @@ export const ContactPage: React.FC = () => {
                   onChange={e => setTopic(e.target.value)}
                   className="w-full px-3 py-2.5 border border-stone-300 rounded-xl"
                 >
-                  <option value="EQUIPMENT_SUPPORT">{t('contact.topicEquipment', 'Machinery Availability & Custom Hiring')}</option>
-                  <option value="PAYMENT_ESCROW">{t('contact.topicPayment', 'Escrow Payments & Refund Inquiry')}</option>
-                  <option value="OWNER_ONBOARDING">{t('contact.topicOwner', 'Listing Multiple Tractors / CHC Partnership')}</option>
-                  <option value="DISPUTE">{t('contact.topicDispute', 'Escalating Rental Dispute')}</option>
+                  <option value="EQUIPMENT_SUPPORT">
+                    {t('contact.topicEquipment', 'Machinery Availability & Custom Hiring')}
+                  </option>
+                  <option value="PAYMENT_ESCROW">
+                    {t('contact.topicPayment', 'Escrow Payments & Refund Inquiry')}
+                  </option>
+                  <option value="OWNER_ONBOARDING">
+                    {t('contact.topicOwner', 'Listing Multiple Tractors / CHC Partnership')}
+                  </option>
+                  <option value="DISPUTE">
+                    {t('contact.topicDispute', 'Escalating Rental Dispute')}
+                  </option>
                 </select>
               </div>
 
