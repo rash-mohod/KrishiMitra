@@ -294,16 +294,6 @@ export interface AiChatMessage {
   content: string;
 }
 
-export const aiApi = {
-  async chat(message: string, conversation: AiChatMessage[] = []): Promise<string> {
-    const data = await request<{ message: string }>('/ai/chat', {
-      method: 'POST',
-      body: JSON.stringify({ message, conversation: conversation.slice(-12) })
-    });
-    return data.message;
-  }
-};
-
 export const chatApi={
  async getConversations(_userId?:string,options?:{type?:string;archived?:boolean;search?:string}){return (await request<{conversations:ChatConversation[]}>(`/chat/conversations${query(options??{})}`)).conversations},
  async getConversationById(id:string){try{return (await request<{conversation:ChatConversation}>(`/chat/conversations/${enc(id)}`)).conversation}catch{return null}},

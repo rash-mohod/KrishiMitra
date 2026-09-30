@@ -13,9 +13,8 @@ import disputeRoutes from './routes/disputes.js';
 import favoriteRoutes from './routes/favorites.js';
 import adminRoutes from './routes/admin.js';
 import paymentRoutes from './routes/payments.js';
-import aiRoutes from './routes/ai.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { aiChatLimiter } from './middleware/rateLimiter.js';
+
 
 export const app = express();
 app.use(helmet());
@@ -35,6 +34,5 @@ app.use('/api/disputes', disputeRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/ai', aiChatLimiter, aiRoutes);
 app.use('/api', (_req, res) => res.status(404).json({ success: false, message: 'The requested API endpoint does not exist.' }));
 app.use(errorHandler);

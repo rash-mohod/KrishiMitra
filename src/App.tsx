@@ -18,7 +18,7 @@ import { ContactPage } from './pages/ContactPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ChatPage } from './pages/ChatPage';
 import { FloatingChatWidget } from './components/chat/FloatingChatWidget';
-import { KrishiMitraChatbot } from './components/chatbot/KrishiMitraChatbot';
+
 
 import { Booking } from './types';
 import { CheckCircle2 } from 'lucide-react';
@@ -328,11 +328,7 @@ const AppContent: React.FC = () => {
         {renderCurrentView()}
       </main>
 
-      {/* Global KrishiMitra AI Assistant — separate from personal messaging */}
-      {!currentPath.startsWith('/login') && !currentPath.startsWith('/register') && !currentPath.startsWith('/forgot-password') && !currentPath.startsWith('/reset-password') && !currentPath.startsWith('/auth/callback') && (
-        <KrishiMitraChatbot />
-      )}
-
+      
       {/* Global Floating Messenger Widget (Active everywhere for logged-in users except on full /messages page) */}
       {!currentPath.startsWith('/messages') && !currentPath.startsWith('/chat') && (
         <FloatingChatWidget

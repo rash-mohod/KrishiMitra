@@ -92,7 +92,7 @@ Frontend `.env.local`:
 
 ```env
 VITE_API_URL=http://localhost:5000/api
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+
 ```
 
 Backend `server/.env`:
