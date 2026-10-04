@@ -173,7 +173,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
             )}
           </div>
           <span className="font-display font-bold text-xs">
-            Direct Kisan Chat
+            {t('chat.directKisanChat', 'Direct Kisan Chat')}
           </span>
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
         </button>
@@ -203,7 +203,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                     </div>
                     <div className="text-[10px] text-emerald-400 font-medium truncate flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      {counterpart.role === 'ADMIN' ? 'Agri Extension Officer' : translateRole(counterpart.role)}
+                      {counterpart.role === 'ADMIN' ? t('chat.agriExtensionOfficer', 'Agri Extension Officer') : translateRole(counterpart.role)}
                     </div>
                   </div>
                 </div>
@@ -212,7 +212,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                   <div className="w-7 h-7 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">
                     KM
                   </div>
-                  <span className="font-bold text-xs font-display">1-on-1 Personal Chat</span>
+                  <span className="font-bold text-xs font-display">{t('chat.personalChat', '1-on-1 Personal Chat')}</span>
                 </div>
               )}
             </div>
@@ -223,7 +223,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                 <a
                   href={`tel:${counterpart.phone}`}
                   className="p-1.5 hover:text-white hover:bg-stone-800 rounded-lg transition"
-                  title="Call Phone"
+                  title={t('chat.callPhone', 'Call Phone')}
                 >
                   <Phone className="w-3.5 h-3.5" />
                 </a>
@@ -234,7 +234,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1.5 hover:text-emerald-400 hover:bg-stone-800 rounded-lg transition"
-                  title="Open WhatsApp"
+                  title={t('chat.openWhatsApp', 'Open WhatsApp')}
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                 </a>
@@ -245,7 +245,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                   onNavigateToMessages(selectedConvId || undefined);
                 }}
                 className="p-1.5 hover:text-white hover:bg-stone-800 rounded-lg transition cursor-pointer"
-                title="Open Fullscreen Messenger"
+                title={t('chat.openFullscreen', 'Open Fullscreen Messenger')}
               >
                 <Maximize2 className="w-3.5 h-3.5" />
               </button>
@@ -262,7 +262,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
           {!selectedConvId ? (
             <div className="flex-1 overflow-y-auto divide-y divide-stone-100 p-2">
               <div className="p-2 text-[11px] font-bold text-stone-400 uppercase tracking-wider">
-                Direct Conversations
+                {t('chat.directConversations', 'Direct Conversations')}
               </div>
               {conversations.map(conv => {
                 const p = conv.participants.find(part => (part.userId || part.id) !== user.id) || conv.participants[0];
@@ -300,7 +300,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                   }}
                   className="text-xs text-emerald-700 font-bold hover:underline cursor-pointer"
                 >
-                  Open Full Messenger →
+                  {t('chat.openFullMessenger', 'Open Full Messenger')} →
                 </button>
               </div>
             </div>
@@ -321,7 +321,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                       }}
                       className="text-[10px] text-emerald-700 font-bold hover:underline shrink-0 cursor-pointer"
                     >
-                      View Specs
+                      {t('chat.viewSpecs', 'View Specs')}
                     </button>
                   )}
                 </div>
@@ -361,13 +361,13 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                   className="px-2 py-0.5 bg-stone-100 hover:bg-emerald-50 text-stone-700 rounded-full text-[10px] whitespace-nowrap transition cursor-pointer flex items-center gap-1"
                 >
                   <MapPin className="w-2.5 h-2.5 text-emerald-600" />
-                  <span>Share Farm GPS</span>
+                  <span>{t('chat.shareFarmGps', 'Share Farm GPS')}</span>
                 </button>
                 <button
                   onClick={() => handleSendMessage('Is your tractor available for 3 days next week?')}
                   className="px-2 py-0.5 bg-stone-100 hover:bg-emerald-50 text-stone-700 rounded-full text-[10px] whitespace-nowrap transition cursor-pointer"
                 >
-                  Availability next week?
+                  {t('chat.availabilityNextWeek', 'Availability next week?')}
                 </button>
               </div>
 
@@ -384,7 +384,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                     type="text"
                     value={inputText}
                     onChange={e => setInputText(e.target.value)}
-                    placeholder={`Message ${counterpart?.name || ''}...`}
+                    placeholder={`${t('chat.messagePrefix', 'Message')} ${counterpart?.name || ''}...`}
                     className="flex-1 px-3 py-2 bg-stone-100 border border-stone-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600"
                   />
                   <button

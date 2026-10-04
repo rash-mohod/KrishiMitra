@@ -12,7 +12,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
   return (
     <footer className="bg-stone-900 text-stone-300 border-t border-stone-800">
-      
+
       {/* Trust Badges Row */}
       <div className="border-b border-stone-800 py-8 bg-stone-950/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -45,9 +45,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <Award className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-white font-bold text-sm">{t('trust.escrowTitle', 'Secure Booking Workflow')}</h4>
+              <h4 className="text-white font-bold text-sm">{t('trust.escrowTitle', 'Verified Booking Process')}</h4>
               <p className="text-stone-400 text-xs mt-0.5 leading-relaxed">
-                {t('trust.escrowDesc', 'The remaining rental amount is paid directly to the owner by Cash or UPI and confirmed by the owner.')}
+                {t('trust.escrowDesc', 'Booking requests are confirmed after owner approval and successful payment verification.')}
               </p>
             </div>
           </div>
@@ -68,7 +68,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
       {/* Main Footer Links */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          
+
           {/* Col 1: Brand & Helpline */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -94,36 +94,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div>
             <h4 className="text-white font-bold text-sm mb-3 font-display">{t('home.browseByCategory', 'Machinery Categories')}</h4>
             <ul className="space-y-2 text-xs text-stone-400">
-              <li>
-                <button onClick={() => onNavigate('/equipment?category=cat-tractors')} className="hover:text-emerald-400 transition text-left">
-                  {t('category.tractors', 'Utility & 4WD Tractors (35-75 HP)')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/equipment?category=cat-harvesters')} className="hover:text-emerald-400 transition text-left">
-                  {t('category.harvesters', 'Multi-Crop Combine Harvesters')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/equipment?category=cat-rotavators')} className="hover:text-emerald-400 transition text-left">
-                  {t('category.rotavators', 'Rotavators & Rotary Tillers')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/equipment?category=cat-seeders')} className="hover:text-emerald-400 transition text-left">
-                  {t('category.seeders', 'Super Seeders & Zero-Till Drills')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/equipment?category=cat-sprayers')} className="hover:text-emerald-400 transition text-left">
-                  {t('category.sprayers', 'Tractor-Mounted Boom Sprayers')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/equipment?category=cat-balers')} className="hover:text-emerald-400 transition text-left">
-                  {t('category.balers', 'Laser Land Levelers & Balers')}
-                </button>
-              </li>
+              <li><button onClick={() => onNavigate('/equipment?category=cat-tractors')} className="hover:text-emerald-400 transition text-left">{t('category.tractors', 'Utility & 4WD Tractors (35-75 HP)')}</button></li>
+              <li><button onClick={() => onNavigate('/equipment?category=cat-harvesters')} className="hover:text-emerald-400 transition text-left">{t('category.harvesters', 'Multi-Crop Combine Harvesters')}</button></li>
+              <li><button onClick={() => onNavigate('/equipment?category=cat-rotavators')} className="hover:text-emerald-400 transition text-left">{t('category.rotavators', 'Rotavators & Rotary Tillers')}</button></li>
+              <li><button onClick={() => onNavigate('/equipment?category=cat-seeders')} className="hover:text-emerald-400 transition text-left">{t('category.seeders', 'Super Seeders & Zero-Till Drills')}</button></li>
+              <li><button onClick={() => onNavigate('/equipment?category=cat-sprayers')} className="hover:text-emerald-400 transition text-left">{t('category.sprayers', 'Tractor-Mounted Boom Sprayers')}</button></li>
+              <li><button onClick={() => onNavigate('/equipment?category=cat-balers')} className="hover:text-emerald-400 transition text-left">{t('category.balers', 'Laser Land Levelers & Balers')}</button></li>
             </ul>
           </div>
 
@@ -131,51 +107,25 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div>
             <h4 className="text-white font-bold text-sm mb-3 font-display">{t('footer.quickLinks', 'Portals & Workflows')}</h4>
             <ul className="space-y-2 text-xs text-stone-400">
-              <li>
-                <button onClick={() => onNavigate('/farmer/dashboard')} className="hover:text-emerald-400 transition text-left">
-                  {t('dash.farmerWelcome', 'Farmer Rental Dashboard')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/owner/dashboard')} className="hover:text-emerald-400 transition text-left">
-                  {t('dash.ownerWelcome', 'Equipment Owner Portal & Fleet Hub')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/owner/equipment/add')} className="hover:text-emerald-400 transition text-left">
-                  {t('home.listMachinery', 'List Machinery for Rent')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/admin/dashboard')} className="hover:text-emerald-400 transition text-left">
-                  {t('dash.adminWelcome', 'State Extension & Moderation Admin')}
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('/how-it-works')} className="hover:text-emerald-400 transition text-left">
-                  {t('nav.howItWorks', 'How Krishi Mitra Works')}
-                </button>
-              </li>
+              <li><button onClick={() => onNavigate('/farmer/dashboard')} className="hover:text-emerald-400 transition text-left">{t('dash.farmerWelcome', 'Farmer Rental Dashboard')}</button></li>
+              <li><button onClick={() => onNavigate('/owner/dashboard')} className="hover:text-emerald-400 transition text-left">{t('dash.ownerWelcome', 'Equipment Owner Portal & Fleet Hub')}</button></li>
+              <li><button onClick={() => onNavigate('/owner/equipment/add')} className="hover:text-emerald-400 transition text-left">{t('home.listMachinery', 'List Machinery for Rent')}</button></li>
+              <li><button onClick={() => onNavigate('/admin/dashboard')} className="hover:text-emerald-400 transition text-left">{t('dash.adminWelcome', 'State Extension & Moderation Admin')}</button></li>
+              <li><button onClick={() => onNavigate('/how-it-works')} className="hover:text-emerald-400 transition text-left">{t('nav.howItWorks', 'How Krishi Mitra Works')}</button></li>
             </ul>
           </div>
 
           {/* Col 4: Trust & Support */}
           <div>
-            <h4 className="text-white font-bold text-sm mb-3 font-display">Security & Compliance</h4>
+            <h4 className="text-white font-bold text-sm mb-3 font-display">{t('footer.securityCompliance', 'Security & Compliance')}</h4>
             <div className="space-y-2.5 text-xs text-stone-400">
               <p className="leading-relaxed">
-                Online payment integration is not enabled in the current version.
+                {t('footer.securePaymentsDesc', 'Secure online payments are supported through Razorpay for eligible booking payments.')}
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
-                <span className="px-2 py-0.5 bg-stone-800 text-stone-300 rounded text-[10px] font-mono border border-stone-700">
-                  Booking Workflow
-                </span>
-                <span className="px-2 py-0.5 bg-stone-800 text-stone-300 rounded text-[10px] font-mono border border-stone-700">
-                  Agri-Fintech
-                </span>
-                <span className="px-2 py-0.5 bg-stone-800 text-stone-300 rounded text-[10px] font-mono border border-stone-700">
-                  Escrow Protected
-                </span>
+                <span className="px-2 py-0.5 bg-stone-800 text-stone-300 rounded text-[10px] font-mono border border-stone-700">{t('footer.securePayments', 'Secure Payments')}</span>
+                <span className="px-2 py-0.5 bg-stone-800 text-stone-300 rounded text-[10px] font-mono border border-stone-700">{t('footer.verifiedTransactions', 'Verified Transactions')}</span>
+                <span className="px-2 py-0.5 bg-stone-800 text-stone-300 rounded text-[10px] font-mono border border-stone-700">{t('footer.bookingProtection', 'Booking Protection')}</span>
               </div>
               <div className="pt-2">
                 <button

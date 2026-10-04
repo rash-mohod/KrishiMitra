@@ -160,10 +160,10 @@ export const EquipmentPage: React.FC<EquipmentPageProps> = ({
                 aria-label={t('common.sortBy', 'Sort By')}
                 className="px-2.5 py-1.5 bg-white border border-stone-300 rounded-lg text-xs font-semibold text-stone-800 focus:outline-none focus:ring-1 focus:ring-emerald-600"
               >
-                <option value="rating">{t('common.rating', 'Highest Rated')}</option>
-                <option value="price_asc">{t('common.price', 'Price: Low to High')}</option>
-                <option value="price_desc">{t('common.price', 'Price: High to Low')}</option>
-                <option value="popular">{t('common.verifiedOwner', 'Most Booked')}</option>
+                <option value="rating">{t('sort.rating', 'Highest Rated')}</option>
+                <option value="price_asc">{t('sort.priceAsc', 'Price: Low to High')}</option>
+                <option value="price_desc">{t('sort.priceDesc', 'Price: High to Low')}</option>
+                <option value="popular">{t('sort.mostBooked', 'Most Booked')}</option>
               </select>
             </div>
           </div>

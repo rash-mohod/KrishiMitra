@@ -330,7 +330,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
               {equipment.horsepower && (
                 <span className="bg-amber-100 text-amber-900 font-bold px-2.5 py-0.5 rounded flex items-center gap-1">
                   <Zap className="w-3 h-3" />
-                  <span>{equipment.horsepower} HP Engine</span>
+                  <span>{equipment.horsepower} {t('detail.hpEngine', 'HP Engine')}</span>
                 </span>
               )}
             </div>
@@ -351,7 +351,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4 text-stone-400" />
-                <span>{equipment.totalRentals} {t('common.verifiedOwner', 'completed rentals')}</span>
+                <span>{equipment.totalRentals} {t('detail.completedRentals', 'completed rentals')}</span>
               </div>
             </div>
           </div>
@@ -379,7 +379,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
               <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
                 <span className="text-[11px] text-stone-500 block">{t('common.operatorAvailable', 'Driver/Operator')}</span>
                 <span className="text-xs font-bold text-stone-900">
-                  {equipment.operatorAvailable ? `Available (+₹${equipment.operatorCostPerDay}/day)` : 'Self-operated'}
+                  {equipment.operatorAvailable ? `${t('detail.available', 'Available')} (+₹${equipment.operatorCostPerDay}/${t('common.perDay', 'day')})` : t('common.selfOperated', 'Self-operated')}
                 </span>
               </div>
 
@@ -447,10 +447,10 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-stone-900 font-display">
-                    Send Direct Message to {equipment.ownerName}
+                    {t('detail.sendDirectMessageTo', 'Send Direct Message to')} {equipment.ownerName}
                   </h3>
                   <p className="text-[11px] text-stone-500">
-                    Ask about delivery schedule, operator availability, soil condition, or custom pricing.
+                    {t('detail.directMsgHint', 'Ask about delivery schedule, operator availability, soil condition, or custom pricing.')}
                   </p>
                 </div>
               </div>
@@ -467,7 +467,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                   onClick={() => onNavigate('/messages')}
                   className="underline font-bold text-xs hover:text-emerald-950"
                 >
-                  View in Chat &rarr;
+                  {t('chat.viewInChat', 'View in Chat')} &rarr;
                 </button>
               </div>
             )}
@@ -485,28 +485,28 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
               {/* 1-Click Quick Inquiries */}
               <div className="flex flex-wrap gap-1.5 items-center">
                 <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-                  Quick Inquiries:
+                  {t('chat.quickInquiries', 'Quick Inquiries:')}
                 </span>
                 <button
                   type="button"
                   onClick={() => setDirectMsgText(`Namaste ${equipment.ownerName} ji, is this tractor available for rental next Monday?`)}
                   className="px-2.5 py-1 bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 text-stone-600 text-[11px] rounded-lg border border-stone-200 transition"
                 >
-                  Availability next week?
+                  {t('chat.availNextWeek', 'Availability next week?')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDirectMsgText(`Namaste ${equipment.ownerName} ji, do you provide delivery directly to farm gate in our village?`)}
                   className="px-2.5 py-1 bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 text-stone-600 text-[11px] rounded-lg border border-stone-200 transition"
                 >
-                  Farm gate delivery?
+                  {t('chat.farmGateDelivery', 'Farm gate delivery?')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDirectMsgText(`Namaste ${equipment.ownerName} ji, does the machine come with driver and fuel included?`)}
                   className="px-2.5 py-1 bg-stone-100 hover:bg-emerald-50 hover:text-emerald-800 text-stone-600 text-[11px] rounded-lg border border-stone-200 transition"
                 >
-                  Driver & Fuel included?
+                  {t('chat.driverFuelIncluded', 'Driver & Fuel included?')}
                 </button>
               </div>
 
@@ -517,7 +517,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                   className="text-xs font-bold text-emerald-800 hover:text-emerald-950 underline flex items-center gap-1"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Open Full Chat Screen</span>
+                  <span>{t('chat.openFullChat', 'Open Full Chat Screen')}</span>
                 </button>
 
                 <button
@@ -526,7 +526,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                   className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{isSendingDirectMsg ? 'Sending...' : 'Send Message to Owner'}</span>
+                  <span>{isSendingDirectMsg ? t('common.sending', 'Sending...') : t('detail.sendMsgBtn', 'Send Message to Owner')}</span>
                 </button>
               </div>
             </form>
@@ -542,7 +542,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
             </div>
 
             {reviews.length === 0 ? (
-              <p className="text-xs text-stone-500 italic">No reviews yet for this equipment. Be the first to rent!</p>
+              <p className="text-xs text-stone-500 italic">{t('detail.noReviews', 'No reviews yet for this equipment. Be the first to rent!')}</p>
             ) : (
               <div className="space-y-3">
                 {reviews.map(rev => (
@@ -550,7 +550,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-stone-900">{rev.reviewerName || 'Anonymous Farmer'}</span>
-                        <span className="text-[10px] text-stone-400">({rev.reviewerRole === 'FARMER' ? 'Farmer' : rev.reviewerRole})</span>
+                        <span className="text-[10px] text-stone-400">({rev.reviewerRole === 'FARMER' ? t('role.farmer', 'Farmer') : rev.reviewerRole})</span>
                       </div>
                       <div className="flex items-center gap-1 text-amber-500 text-xs font-bold">
                         <Star className="w-3.5 h-3.5 fill-amber-400" />
@@ -576,32 +576,32 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                   <Info className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-stone-900">Owner Market Analysis</h3>
-                  <p className="text-xs text-stone-500">Compare another owner's rental pricing.</p>
+                  <h3 className="font-bold text-stone-900">{t('detail.ownerMarketAnalysis', 'Owner Market Analysis')}</h3>
+                  <p className="text-xs text-stone-500">{t('detail.compareOwnerPricing', "Compare another owner's rental pricing.")}</p>
                 </div>
               </div>
 
               <div className="p-5 bg-stone-50 rounded-2xl border border-stone-200 text-center">
-                <span className="text-[11px] font-bold text-stone-400 uppercase tracking-wider block">Rental Rate</span>
+                <span className="text-[11px] font-bold text-stone-400 uppercase tracking-wider block">{t('marketplace.pricePerDay', 'Rental Rate')}</span>
                 <div className="mt-1">
                   <span className="text-3xl font-black text-stone-900 font-display">₹{equipment.pricePerDay.toLocaleString('en-IN')}</span>
-                  <span className="text-sm text-stone-500"> / day</span>
+                  <span className="text-sm text-stone-500"> / {t('common.perDay', 'day')}</span>
                 </div>
               </div>
 
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-stone-600">
-                  <span>Security Deposit</span>
+                  <span>{t('common.deposit', 'Security Deposit')}</span>
                   <span className="font-bold text-stone-900">₹{equipment.securityDeposit.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between text-stone-600">
-                  <span>Operator</span>
-                  <span className="font-bold text-stone-900">{equipment.operatorAvailable ? `Available (+₹${equipment.operatorCostPerDay}/day)` : 'Not included'}</span>
+                  <span>{t('common.operatorAvailable', 'Driver/Operator')}</span>
+                  <span className="font-bold text-stone-900">{equipment.operatorAvailable ? `${t('detail.available', 'Available')} (+₹${equipment.operatorCostPerDay}/${t('common.perDay', 'day')})` : t('common.notIncluded', 'Not included')}</span>
                 </div>
               </div>
 
               <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-[11px] text-blue-800">
-                Owner accounts can view machinery specifications and rental rates for market comparison, but cannot book or message another owner.
+                {t('detail.ownerNotice', 'Owner accounts can view machinery specifications and rental rates for market comparison, but cannot book or message another owner.')}
               </div>
             </div>
           ) : (
@@ -671,10 +671,10 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                       onChange={e => setOperatorIncluded(e.target.checked)}
                       className="w-4 h-4 accent-emerald-700 rounded"
                     />
-                    <span>{t('booking.includeOperator', 'Include Machine Driver/Operator')} (+₹{equipment.operatorCostPerDay}/day)</span>
+                    <span>{t('booking.includeOperator', 'Include Machine Driver/Operator')} (+₹{equipment.operatorCostPerDay}/{t('common.perDay', 'day')})</span>
                   </label>
                   <p className="text-[10px] text-stone-500 mt-1 pl-6">
-                    Professional, verified operator handles all field operations and fuel efficiency.
+                    {t('booking.operatorDesc', 'Professional, verified operator handles all field operations and fuel efficiency.')}
                   </p>
                 </div>
               )}
@@ -707,19 +707,19 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
               {/* Live Tariff Breakdown */}
               <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-2 text-xs">
                 <div className="flex justify-between text-stone-600">
-                  <span>{t('booking.baseRent', 'Base Rental')} ({priceBreakdown.durationDays} {t('common.perDay', 'days')} × ₹{equipment.pricePerDay})</span>
+                  <span>{t('booking.baseRent', 'Base Rental')} ({priceBreakdown.durationDays} {t('common.days', 'days')} × ₹{equipment.pricePerDay})</span>
                   <span className="font-semibold text-stone-900">₹{priceBreakdown.baseAmount.toLocaleString('en-IN')}</span>
                 </div>
 
                 {operatorIncluded && (
                   <div className="flex justify-between text-stone-600">
-                    <span>{t('booking.operatorFee', 'Operator Fee')} ({priceBreakdown.durationDays} {t('common.perDay', 'days')} × ₹{equipment.operatorCostPerDay})</span>
+                    <span>{t('booking.operatorFee', 'Operator Fee')} ({priceBreakdown.durationDays} {t('common.days', 'days')} × ₹{equipment.operatorCostPerDay})</span>
                     <span className="font-semibold text-stone-900">₹{priceBreakdown.operatorAmount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between text-stone-600">
-                  <span>Booking / Advance Amount</span>
+                  <span>{t('booking.advanceAmount', 'Booking / Advance Amount')}</span>
                   <span className="font-semibold text-stone-900">₹{Number(priceBreakdown.bookingAmount || 0).toLocaleString('en-IN')}</span>
                 </div>
 
@@ -729,12 +729,12 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                 </div>
 
                 <div className="flex justify-between text-emerald-800 font-bold">
-                  <span>Online payment after owner approval</span>
+                  <span>{t('booking.onlinePaymentNote', 'Online payment after owner approval')}</span>
                   <span>₹{Number(priceBreakdown.onlinePaymentAmount || 0).toLocaleString('en-IN')}</span>
                 </div>
 
                 <div className="flex justify-between text-stone-600">
-                  <span>Remaining rental paid directly to owner</span>
+                  <span>{t('booking.remainingRentalNote', 'Remaining rental paid directly to owner')}</span>
                   <span className="font-semibold text-stone-900">₹{Number(priceBreakdown.remainingRentalAmount || 0).toLocaleString('en-IN')}</span>
                 </div>
 
@@ -744,7 +744,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                 </div>
 
                 <div className="pt-2 border-t border-stone-200 flex justify-between items-baseline font-bold text-stone-900 text-sm">
-                  <span>Total Rental Amount</span>
+                  <span>{t('booking.totalRentalAmount', 'Total Rental Amount')}</span>
                   <span className="font-display font-black text-lg text-emerald-800">
                     ₹{priceBreakdown.totalAmount.toLocaleString('en-IN')}
                   </span>
@@ -759,7 +759,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                   className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-2xl shadow-md transition disabled:opacity-60 text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Lock className="w-4 h-4" />
-                  <span>{isSubmittingBooking ? 'Submitting Request...' : t('booking.submitRequest', 'Submit Booking Request')}</span>
+                  <span>{isSubmittingBooking ? t('booking.submitting', 'Submitting Request...') : t('booking.submitRequest', 'Submit Booking Request')}</span>
                 </button>
 
                 <button
@@ -768,14 +768,14 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                   className="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold rounded-xl transition text-xs flex items-center justify-center gap-2 cursor-pointer border border-stone-200"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Questions before booking? Message {equipment.ownerName}</span>
+                  <span>{t('booking.questionsBeforeBooking', 'Questions before booking? Message')} {equipment.ownerName}</span>
                 </button>
               </div>
             </form>
 
             <div className="text-[11px] text-stone-400 text-center flex items-center justify-center gap-1 pt-1">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Razorpay payment is available after the owner approves the booking</span>
+              <span>{t('booking.razorpayEscrowNote', 'Razorpay payment is available after the owner approves the booking')}</span>
             </div>
 
           </div>

@@ -75,7 +75,7 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
               ? 'bg-rose-50 text-rose-600 shadow-sm'
               : 'bg-stone-900/60 text-white hover:bg-stone-900/80'
           }`}
-          aria-label="Save to wishlist"
+          aria-label={t('common.saveToWishlist', 'Save to wishlist')}
         >
           <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-600' : ''}`} />
         </button>
@@ -83,7 +83,7 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
         {/* HP / Power badge if tractor */}
         {equipment.horsepower && (
           <span className="absolute bottom-3 left-3 bg-emerald-800 text-emerald-100 text-[10px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
-            <Zap className="w-3-h-3 text-amber-300" />
+            <Zap className="w-3 h-3 text-amber-300" />
             <span>{equipment.horsepower} HP</span>
           </span>
         )}
@@ -164,7 +164,7 @@ export const EquipmentCard: React.FC<EquipmentCardProps> = ({
                   onMessageOwner(equipment);
                 }}
                 className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold transition cursor-pointer"
-                title={`Message ${equipment.ownerName}`}
+                title={t('chat.chatWithOwner', 'Message Owner')}
               >
                 <MessageSquare className="w-3.5 h-3.5" />
               </button>

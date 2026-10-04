@@ -98,19 +98,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
           <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-stone-300 text-xs">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Verified Owners</span>
+              <span>{t('home.verifiedOwners', 'Verified Owners')}</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Owner-listed rental availability</span>
+              <span>{t('home.ownerAvailability', 'Owner-listed rental availability')}</span>
             </div>
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Secure booking workflow</span>
+              <span>{t('home.secureWorkflow', 'Secure booking workflow')}</span>
             </div>
             <div className="flex items-center gap-2">
               <Star className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Transparent machinery ratings</span>
+              <span>{t('home.machineryRatings', 'Transparent machinery ratings')}</span>
             </div>
           </div>
         </div>
@@ -161,7 +161,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block mb-1">
-              Top Rated & Ready for Work
+              {t('home.topRatedReady', 'Top Rated & Ready for Work')}
             </span>
             <h2 className="font-display font-bold text-2xl sm:text-3xl text-stone-900">
               {t('home.featuredEquipment', 'Featured Agricultural Machinery')}
@@ -194,13 +194,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block mb-1">
-              Simple 4-Step Rental Process
+              {t('home.simple4Step', 'Simple 4-Step Rental Process')}
             </span>
             <h2 className="font-display font-bold text-2xl sm:text-3xl text-stone-900">
               {t('home.howItWorksTitle', 'How Krishi Mitra Works')}
             </h2>
             <p className="text-stone-600 text-xs sm:text-sm mt-2">
-              Modern farm mechanization made seamless for both farmers and equipment owners.
+              {t('home.howItWorksSubtitle', 'Modern farm mechanization made seamless for both farmers and equipment owners.')}
             </p>
           </div>
 
@@ -272,7 +272,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                 <span>{t('home.earnTitle', 'Monetize Idle Farm Machinery')}</span>
               </div>
               <h2 className="font-display font-extrabold text-2xl sm:text-4xl text-white tracking-tight">
-                Turn Your Idle Tractor into a Steady Seasonal Income.
+                {t('home.earnHeadline', 'Turn Your Idle Tractor into a Steady Seasonal Income.')}
               </h2>
               <p className="text-stone-300 text-xs sm:text-sm leading-relaxed">
                 {t('home.earnSubtitle', 'Most agricultural tractors sit idle for 180+ days a year. List on Krishi Mitra to rent to verified progressive farmers in your tehsil with full secure booking payments and zero broker commission.')}
@@ -300,13 +300,13 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">Cost Per Day (₹)</label>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">{t('home.costPerDay', 'Cost Per Day (₹)')}</label>
                 <input type="number" min="0" value={calcRate} onChange={e => setCalcRate(e.target.value)} className="w-full px-3 py-2 text-xs bg-stone-900 border border-stone-600 rounded-lg text-white focus:ring-1 focus:ring-emerald-500 focus:outline-none" />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Number of Rental Days
+                  {t('home.numberOfDays', 'Number of Rental Days')}
                 </label>
                 <input
                   type="range"
@@ -318,8 +318,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                   className="w-full accent-emerald-500 cursor-pointer"
                 />
                 <div className="flex justify-between text-xs text-stone-400 mt-1">
-                  <span>{calcDays} Days</span>
-                  <span>₹{Number(calcRate || 0).toLocaleString('en-IN')}/day</span>
+                  <span>{calcDays} {t('common.days', 'Days')}</span>
+                  <span>₹{Number(calcRate || 0).toLocaleString('en-IN')}/{t('common.perDay', 'day')}</span>
                 </div>
               </div>
 
@@ -331,7 +331,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                   </div>
                 </div>
                 <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-1 rounded">
-                  Direct Owner Payment
+                  {t('home.directOwnerPayment', 'Direct Owner Payment')}
                 </span>
               </div>
             </div>
@@ -349,10 +349,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                 <UserCheck className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-stone-900 text-base font-display">
-                Account & Rental Safety
+                {t('home.safetyTitle', 'Account & Rental Safety')}
               </h3>
               <p className="text-stone-600 text-xs leading-relaxed">
-                KrishiMitra uses authenticated accounts, booking controls, payment verification, and role-based access to support safer rentals.
+                {t('home.safetyDesc', 'KrishiMitra uses authenticated accounts, booking controls, payment verification, and role-based access to support safer rentals.')}
               </p>
             </div>
 
@@ -361,10 +361,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-stone-900 text-base font-display">
-                Dispute Support
+                {t('home.disputeTitle', 'Dispute Support')}
               </h3>
               <p className="text-stone-600 text-xs leading-relaxed">
-                Raise a rental dispute through the platform for review by the KrishiMitra admin team.
+                {t('home.disputeDesc', 'Raise a rental dispute through the platform for review by the KrishiMitra admin team.')}
               </p>
             </div>
 
@@ -373,10 +373,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                 <Wheat className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-stone-900 text-base font-display">
-                Boost Farm Productivity
+                {t('home.productivityTitle', 'Boost Farm Productivity')}
               </h3>
               <p className="text-stone-600 text-xs leading-relaxed">
-                Complete sowing, weeding, spraying, and harvesting in critical weather windows without heavy capital debt.
+                {t('home.productivityDesc', 'Complete sowing, weeding, spraying, and harvesting in critical weather windows without heavy capital debt.')}
               </p>
             </div>
           </div>

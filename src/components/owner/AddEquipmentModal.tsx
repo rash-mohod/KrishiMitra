@@ -178,7 +178,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
     setCameraError(null);
 
     if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraError('Live camera access is not supported by this browser. Please use Choose From Device instead.');
+      setCameraError(t('addMachinery.cameraUnsupported', 'Live camera access is not supported by this browser. Please use Choose From Device instead.'));
       setIsCameraOpen(true);
       return;
     }
@@ -193,10 +193,10 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
       setIsCameraOpen(true);
     } catch (err: any) {
       const message = err?.name === 'NotAllowedError'
-        ? 'Camera permission was denied. Please allow camera access in your browser settings and try again.'
+        ? t('addMachinery.cameraPermissionDenied', 'Camera permission was denied. Please allow camera access in your browser settings and try again.')
         : err?.name === 'NotFoundError'
-          ? 'No camera was found on this device.'
-          : 'Could not open the camera. Please check your browser permissions and try again.';
+          ? t('addMachinery.noCameraFound', 'No camera was found on this device.')
+          : t('addMachinery.cameraOpenFailed', 'Could not open the camera. Please check your browser permissions and try again.');
       setCameraError(message);
       setIsCameraOpen(true);
     } finally {
@@ -209,7 +209,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
 
     const video = videoRef.current;
     if (!video || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
-      setCameraError('Camera is still starting. Please wait a moment and try again.');
+      setCameraError(t('addMachinery.cameraStarting', 'Camera is still starting. Please wait a moment and try again.'));
       return;
     }
 
@@ -218,7 +218,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
     canvas.height = video.videoHeight;
     const context = canvas.getContext('2d');
     if (!context) {
-      setCameraError('Could not capture the camera image. Please try again.');
+      setCameraError(t('addMachinery.captureFailed', 'Could not capture the camera image. Please try again.'));
       return;
     }
 
@@ -229,12 +229,12 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(result => {
           if (result) resolve(result);
-          else reject(new Error('Could not create the captured photo.'));
+          else reject(new Error(t('addMachinery.photoCreateFailed', 'Could not create the captured photo.')));
         }, 'image/jpeg', 0.9);
       });
 
       if (blob.size > 5 * 1024 * 1024) {
-        setCameraError('Captured photo is larger than 5 MB. Please retake the photo.');
+        setCameraError(t('addMachinery.photoTooLarge', 'Captured photo is larger than 5 MB. Please retake the photo.'));
         return;
       }
 
@@ -250,7 +250,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
         setIsUploadingPhoto(false);
       }
     } catch (err: any) {
-      setCameraError(err?.message || 'Camera photo upload failed.');
+      setCameraError(err?.message || t('addMachinery.cameraUploadFailed', 'Camera photo upload failed.'));
     }
   };
 
@@ -265,26 +265,26 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
     if (!files || files.length === 0) return;
     setError(null);
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith('image/')) { setError('Please upload a valid machinery photo.'); continue; }
-      if (file.size > 5 * 1024 * 1024) { setError('Each photo must be 5 MB or smaller.'); continue; }
+      if (!file.type.startsWith('image/')) { setError(t('addMachinery.invalidPhoto', 'Please upload a valid machinery photo.')); continue; }
+      if (file.size > 5 * 1024 * 1024) { setError(t('addMachinery.photoSizeLimit', 'Each photo must be 5 MB or smaller.')); continue; }
       try {
         const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result));
-          reader.onerror = () => reject(new Error('Could not read photo.'));
+          reader.onerror = () => reject(new Error(t('addMachinery.photoReadFailed', 'Could not read photo.')));
           reader.readAsDataURL(file);
         });
         const publicUrl = await equipmentApi.uploadImage(dataUrl, file.name);
         setImages(prev => [...prev, publicUrl]);
       } catch (err: any) {
-        setError(err.message || 'Photo upload failed.');
+        setError(err.message || t('addMachinery.photoUploadFailed', 'Photo upload failed.'));
       }
     }
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
     if (images.length <= 1) {
-      setError('Please keep at least one machinery image.');
+      setError(t('addMachinery.keepOnePhoto', 'Please keep at least one machinery image.'));
       return;
     }
     setImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
@@ -303,17 +303,17 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !description.trim()) {
-      setError('Please provide machinery title and detailed description.');
+      setError(t('addMachinery.titleDescriptionRequired', 'Please provide machinery title and detailed description.'));
       return;
     }
 
     if (images.length === 0) {
-      setError('At least one real machinery photo is required before you can create or save this listing.');
+      setError(t('addMachinery.photoRequired', 'At least one real machinery photo is required before you can create or save this listing.'));
       return;
     }
 
     if (!pricePerDay.trim() || Number(pricePerDay) <= 0) {
-      setError('Please enter the Price Per Day before saving the machinery listing.');
+      setError(t('addMachinery.dailyRateRequired', 'Please enter the Price Per Day before saving the machinery listing.'));
       return;
     }
 
@@ -362,7 +362,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to submit equipment listing.');
+      setError(err.message || t('addMachinery.submitFailed', 'Failed to submit equipment listing.'));
       setIsSubmitting(false);
     }
   };
@@ -374,8 +374,8 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
           <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-stone-200">
               <div>
-                <h3 className="font-bold text-stone-900">Take Machinery Photo</h3>
-                <p className="text-xs text-stone-500 mt-0.5">Position the machinery clearly inside the camera frame.</p>
+                <h3 className="font-bold text-stone-900">{t('addMachinery.takeMachineryPhoto', 'Take Machinery Photo')}</h3>
+                <p className="text-xs text-stone-500 mt-0.5">{t('addMachinery.cameraFrameHint', 'Position the machinery clearly inside the camera frame.')}</p>
               </div>
               <button type="button" onClick={stopCamera} className="p-2 rounded-xl hover:bg-stone-100 text-stone-500">
                 <X className="w-5 h-5" />
@@ -391,7 +391,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                 className="w-full h-full object-cover"
               />
               {isStartingCamera && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-sm">Opening camera…</div>
+                <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-sm">{t('addMachinery.openingCamera', 'Opening camera…')}</div>
               )}
               {cameraError && (
                 <div className="absolute inset-x-4 bottom-4 bg-red-600/95 text-white rounded-xl p-3 text-xs">
@@ -403,11 +403,11 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
             <div className="p-4 flex items-center justify-between gap-3">
               <button type="button" onClick={handleTakePhoto} disabled={isStartingCamera} className="px-4 py-2.5 rounded-xl border border-stone-300 font-bold text-xs text-stone-700 hover:bg-stone-50 disabled:opacity-50 flex items-center gap-2">
                 <RefreshCw className="w-4 h-4" />
-                Restart Camera
+                {t('addMachinery.restartCamera', 'Restart Camera')}
               </button>
               <button type="button" onClick={handleCapturePhoto} disabled={isStartingCamera || !!cameraError || isUploadingPhoto} className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md disabled:opacity-50 flex items-center gap-2">
                 <Camera className="w-4 h-4" />
-                Capture Photo
+                {t('addMachinery.capturePhoto', 'Capture Photo')}
               </button>
             </div>
           </div>
@@ -425,10 +425,10 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
             </div>
             <div>
               <h2 className="font-display font-bold text-lg text-stone-900">
-                {editingEquipment ? 'Edit Machinery Details' : t('addMachinery.title', 'List New Farm Machinery for Rent')}
+                {editingEquipment ? t('addMachinery.editTitle', 'Edit Machinery Details') : t('addMachinery.title', 'List New Farm Machinery for Rent')}
               </h2>
               <p className="text-xs text-stone-500">
-                {editingEquipment ? 'Update the machinery information and save your changes.' : t('addMachinery.subtitle', 'Submissions are reviewed by State Ag Extension Moderators within 2-4 hours.')}
+                {editingEquipment ? t('addMachinery.editSubtitle', 'Update the machinery information and save your changes.') : t('addMachinery.subtitle', 'Submissions are reviewed by State Ag Extension Moderators within 2-4 hours.')}
               </p>
             </div>
           </div>
@@ -442,7 +442,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
 
         {isUploadingPhoto && (
           <div className="p-3.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-semibold">
-            Photo captured. Uploading the machinery photo…
+            {t('addMachinery.photoUploading', 'Photo captured. Uploading the machinery photo…')}
           </div>
         )}
 
@@ -465,7 +465,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="e.g. Mahindra 575 DI Sarpanch 47 HP"
+                placeholder={t('addMachinery.namePlaceholder', 'e.g. Mahindra 575 DI Sarpanch 47 HP')}
                 required
                 className="w-full px-3 py-2 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-xs sm:text-sm font-medium"
               />
@@ -497,7 +497,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                 type="text"
                 value={brand}
                 onChange={e => setBrand(e.target.value)}
-                placeholder="John Deere, Mahindra..."
+                placeholder={t('addMachinery.brandPlaceholder', 'John Deere, Mahindra...')}
                 required
                 className="w-full px-3 py-2 border border-stone-300 rounded-xl text-xs"
               />
@@ -508,7 +508,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                 type="text"
                 value={model}
                 onChange={e => setModel(e.target.value)}
-                placeholder="5310 PowerPro"
+                placeholder={t('addMachinery.modelPlaceholder', '5310 PowerPro')}
                 required
                 className="w-full px-3 py-2 border border-stone-300 rounded-xl text-xs"
               />
@@ -540,10 +540,10 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
             <div>
               <h4 className="font-bold text-stone-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                 <ImageIcon className="w-4 h-4 text-emerald-700" />
-                <span>Machinery Photos *</span>
+                <span>{t('addMachinery.photosLabel', 'Machinery Photos *')}</span>
               </h4>
               <p className="text-[11px] text-stone-500 mt-0.5">
-                Take a real photo of the machinery using your device. At least one photo is required for every listing.
+                {t('addMachinery.photosHint', 'Take a real photo of the machinery using your device. At least one photo is required for every listing.')}
               </p>
             </div>
 
@@ -567,10 +567,10 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                   <UploadCloud className="w-5 h-5" />
                 </div>
                 <span className="font-bold text-stone-800 text-xs">
-                  Choose From Device
+                  {t('addMachinery.chooseFromDevice', 'Choose From Device')}
                 </span>
                 <span className="text-[10px] text-stone-500">
-                  Select existing machinery photos from your phone or computer.
+                  {t('addMachinery.chooseFromDeviceHint', 'Select existing machinery photos from your phone or computer.')}
                 </span>
               </button>
 
@@ -583,10 +583,10 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                   <ImageIcon className="w-5 h-5" />
                 </div>
                 <span className="font-bold text-stone-800 text-xs">
-                  Take Photo With Camera
+                  {t('addMachinery.takePhotoWithCamera', 'Take Photo With Camera')}
                 </span>
                 <span className="text-[10px] text-stone-500">
-                  Permission will be requested before opening the camera.
+                  {t('addMachinery.cameraPermissionHint', 'Permission will be requested before opening the camera.')}
                 </span>
               </button>
             </div>
@@ -594,16 +594,16 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[11px] font-bold text-stone-700">
-                  Attached Photos ({images.length})
+                  {t('addMachinery.attachedPhotos', 'Attached Photos')} ({images.length})
                 </span>
                 <span className="text-[10px] text-stone-500">
-                  First photo is used as the main listing cover
+                  {t('addMachinery.coverHint', 'First photo is used as the main listing cover')}
                 </span>
               </div>
 
               {images.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 px-3 py-3 text-[10px] text-amber-800 font-semibold">
-                  No photo added yet. Add at least one real machinery photo before saving.
+                  {t('addMachinery.noPhotoYet', 'No photo added yet. Add at least one real machinery photo before saving.')}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -611,12 +611,12 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                     <div key={idx} className="relative group rounded-xl overflow-hidden border border-stone-300 aspect-4/3 bg-stone-100">
                       <img
                         src={imgUrl}
-                        alt={`Machinery Photo ${idx + 1}`}
+                        alt={t('addMachinery.photoAlt', 'Machinery Photo {index}').replace('{index}', String(idx + 1))}
                         className="w-full h-full object-cover"
                       />
                       {idx === 0 && (
                         <span className="absolute top-1 left-1 bg-emerald-700 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded shadow-xs">
-                          Cover
+                          {t('addMachinery.cover', 'Cover')}
                         </span>
                       )}
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-1 p-1">
@@ -624,7 +624,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleSetPrimaryImage(idx)}
-                            title="Set as Cover"
+                            title={t('addMachinery.setAsCover', 'Set as Cover')}
                             className="p-1 bg-white text-stone-800 rounded text-[10px] font-bold hover:bg-emerald-100"
                           >
                             ★
@@ -633,7 +633,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveImage(idx)}
-                          title="Remove Photo"
+                          title={t('addMachinery.removePhoto', 'Remove Photo')}
                           className="p-1 bg-red-600 text-white rounded hover:bg-red-700"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -690,7 +690,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-stone-600 mb-1">Booking / Advance Amount (₹)</label>
+                <label className="block text-stone-600 mb-1">{t('addMachinery.bookingAdvanceAmount', 'Booking / Advance Amount (₹)')}</label>
                 <input
                   type="number"
                   min={0}
@@ -707,7 +707,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                     const maximumBookingAmount = Math.floor(Number(pricePerDay || 0) * 0.2);
 
                     if (value > maximumBookingAmount) {
-                      window.alert(`Booking / Advance Amount cannot exceed 20% of the daily rent. Maximum allowed: ₹${maximumBookingAmount}`);
+                      window.alert(t('addMachinery.bookingAdvanceLimit', 'Booking / Advance Amount cannot exceed 20% of the daily rent. Maximum allowed: ₹{amount}').replace('{amount}', `₹${maximumBookingAmount}`));
                       setBookingAmount(String(maximumBookingAmount));
                       return;
                     }
@@ -716,7 +716,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
                   }}
                   className="w-full px-3 py-2 border border-stone-300 rounded-xl bg-white font-bold text-xs"
                 />
-                <p className="text-[10px] text-stone-500 mt-1">Maximum booking / advance amount is 20% of the daily rent (₹{Math.floor(Number(pricePerDay || 0) * 0.2).toLocaleString('en-IN')}).</p>
+                <p className="text-[10px] text-stone-500 mt-1">{t('addMachinery.bookingAdvanceHint', 'Maximum booking / advance amount is 20% of the daily rent (₹{amount}).').replace('{amount}', Math.floor(Number(pricePerDay || 0) * 0.2).toLocaleString('en-IN'))}</p>
               </div>
             </div>
           </div>
@@ -809,7 +809,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
               rows={3}
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Detail engine condition, clutch type, hydraulic capacity, compatible implements, and maintenance schedule..."
+              placeholder={t('addMachinery.descriptionPlaceholder', 'Detail engine condition, clutch type, hydraulic capacity, compatible implements, and maintenance schedule...')}
               required
               className="w-full px-3 py-2 border border-stone-300 rounded-xl text-xs"
             />
@@ -834,7 +834,7 @@ export const AddEquipmentModal: React.FC<AddEquipmentModalProps> = ({
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  <span>{editingEquipment ? 'Save Changes' : t('addMachinery.submitBtn', 'Submit Machinery for Review')}</span>
+                  <span>{editingEquipment ? t('addMachinery.saveChanges', 'Save Changes') : t('addMachinery.submitBtn', 'Submit Machinery for Review')}</span>
                 </>
               )}
             </button>

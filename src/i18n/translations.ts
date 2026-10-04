@@ -167,8 +167,8 @@ export const TRANSLATIONS: Record<LanguageCode, Translations> = {
     'trust.verifiedDesc': 'Every tractor and implement is inspected & document-verified before listing.',
     'trust.pricingTitle': 'Transparent Fixed Pricing',
     'trust.pricingDesc': 'Authoritative hourly, daily, and weekly rates. Zero hidden surcharges or broker fees.',
-    'trust.escrowTitle': 'Secure Booking Workflow',
-    'trust.escrowDesc': 'Funds are released to the equipment owner only after machinery handover confirmation.',
+    'trust.escrowTitle': 'Verified Booking Process',
+    'trust.escrowDesc': 'Booking requests are confirmed after owner approval and successful payment verification.',
 
     'marketplace.title': 'Agricultural Equipment & Machinery',
     'marketplace.subtitle': 'Browse and rent verified modern tractors, cultivators, rotavators, and harvesters.',

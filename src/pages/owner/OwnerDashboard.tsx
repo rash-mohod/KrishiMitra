@@ -214,7 +214,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             title="Chat with Agri Support & KYC Verification Officers"
           >
             <MessageSquare className="w-4 h-4 text-amber-400" />
-            <span>Agri Support Desk</span>
+            <span>{t('chat.adminSupport', 'Agri Support Desk')}</span>
           </button>
           <button
             onClick={() => setAddModalOpen(true)}
@@ -243,7 +243,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           <div className="text-2xl font-black text-stone-900 font-display">
             {activeEquipmentList.length}
           </div>
-          <span className="text-[11px] text-stone-400">Registered machines</span>
+          <span className="text-[11px] text-stone-400">{t('dash.registeredMachines', 'Registered machines')}</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
@@ -254,7 +254,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           <div className="text-2xl font-black text-amber-600 font-display">
             {pendingRequests}
           </div>
-          <span className="text-[11px] text-amber-700 font-medium">Requires owner approval</span>
+          <span className="text-[11px] text-amber-700 font-medium">{t('dash.requiresOwnerApproval', 'Requires owner approval')}</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
@@ -265,7 +265,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           <div className="text-2xl font-black text-blue-700 font-display">
             {activeRentals}
           </div>
-          <span className="text-[11px] text-stone-400">Deployed or confirmed</span>
+          <span className="text-[11px] text-stone-400">{t('dash.deployedOrConfirmed', 'Deployed or confirmed')}</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
@@ -276,7 +276,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           <div className="text-2xl font-black text-emerald-800 font-display">
             ₹{totalEarnings.toLocaleString('en-IN')}
           </div>
-          <span className="text-[11px] text-emerald-700 font-semibold">Net owner payouts</span>
+          <span className="text-[11px] text-emerald-700 font-semibold">{t('dash.netOwnerPayouts', 'Net owner payouts')}</span>
         </div>
       </div>
 

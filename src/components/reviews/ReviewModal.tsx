@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Booking } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { reviewApi } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import { Star, X } from 'lucide-react';
 
 interface ReviewModalProps {
@@ -18,6 +19,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [comment, setComment] = useState('');
@@ -29,7 +31,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) {
-      setError('Please provide feedback about equipment performance and owner communication.');
+      setError(t('review.feedbackRequired', 'Please provide feedback about equipment performance and owner communication.'));
       return;
     }
 
@@ -47,7 +49,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to submit review');
+      setError(err.message || t('review.submitFailed', 'Failed to submit review'));
       setIsSubmitting(false);
     }
   };
@@ -57,7 +59,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
       <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-stone-200 animate-in fade-in zoom-in-95 duration-150">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-stone-900 text-base">Rate Your Experience</h3>
+            <h3 className="font-bold text-stone-900 text-base">{t('review.title', 'Rate Your Experience')}</h3>
             <p className="text-xs text-stone-500">{booking.equipmentName}</p>
           </div>
           <button onClick={onClose} className="text-stone-400 hover:text-stone-700 p-1 rounded-lg">
@@ -97,11 +99,11 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               ))}
             </div>
             <span className="text-xs font-bold text-amber-600 mt-1 inline-block">
-              {rating === 5 && 'Outstanding Condition & Operator'}
-              {rating === 4 && 'Very Good Service'}
-              {rating === 3 && 'Average / Acceptable'}
-              {rating === 2 && 'Below Expectations'}
-              {rating === 1 && 'Poor / Machinery Issues'}
+              {rating === 5 && t('review.ratingOutstanding', 'Outstanding Condition & Operator')}
+              {rating === 4 && t('review.ratingVeryGood', 'Very Good Service')}
+              {rating === 3 && t('review.ratingAverage', 'Average / Acceptable')}
+              {rating === 2 && t('review.ratingBelow', 'Below Expectations')}
+              {rating === 1 && t('review.ratingPoor', 'Poor / Machinery Issues')}
             </span>
           </div>
 
@@ -113,7 +115,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               rows={4}
               value={comment}
               onChange={e => setComment(e.target.value)}
-              placeholder="How was the equipment condition, fuel consumption, and owner responsiveness?"
+              placeholder={t('review.feedbackPlaceholder', 'How was the equipment condition, fuel consumption, and owner responsiveness?')}
               className="w-full text-xs p-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               required
             />
@@ -132,7 +134,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               disabled={isSubmitting}
               className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition shadow-sm disabled:opacity-60"
             >
-              {isSubmitting ? 'Publishing Review...' : 'Submit Review'}
+              {isSubmitting ? t('review.publishing', 'Publishing Review...') : t('review.submit', 'Submit Review')}
             </button>
           </div>
         </form>

@@ -90,9 +90,9 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
       if (type === 'recovery' && accessToken) {
         setRecoveryToken(accessToken);
         setMode('reset-password');
-        setInfoNotice('Verification verified. Please enter your new password.');
+        setInfoNotice(t('auth.verificationVerified', 'Verification verified. Please enter your new password.'));
       } else if (type === 'signup') {
-        setInfoNotice('Your email has been verified successfully! Please log in with your credentials.');
+        setInfoNotice(t('auth.emailVerified', 'Your email has been verified successfully! Please log in with your credentials.'));
         setMode('login');
       }
     }
@@ -125,9 +125,9 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
     } catch (err: any) {
       if (err.code === 'EMAIL_NOT_CONFIRMED' || err.message?.toLowerCase().includes('not confirmed')) {
         setUnconfirmedEmail(loginEmail.trim().toLowerCase());
-        setError('Your email has not been confirmed yet. Please verify your email before logging in.');
+        setError(t('auth.emailNotConfirmed', 'Your email has not been confirmed yet. Please verify your email before logging in.'));
       } else {
-        setError(err.message || 'Invalid email or password. Please verify your credentials.');
+        setError(err.message || t('auth.invalidCredentials', 'Invalid email or password. Please verify your credentials.'));
       }
       setIsSubmitting(false);
     }
@@ -140,19 +140,19 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
     setInfoNotice(null);
 
     if (!/^\d{10}$/.test(regPhone.trim())) {
-      setError('Mobile number must contain exactly 10 digits.');
+      setError(t('auth.invalidMobile', 'Mobile number must contain exactly 10 digits.'));
       setIsSubmitting(false);
       return;
     }
 
     if (!regState || !regDistrict) {
-      setError('Please select your state and district.');
+      setError(t('auth.selectStateDistrict', 'Please select your state and district.'));
       setIsSubmitting(false);
       return;
     }
 
     if (regPassword.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError(t('auth.passwordMinLength', 'Password must be at least 8 characters long.'));
       setIsSubmitting(false);
       return;
     }
@@ -185,7 +185,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
         onSuccess(result.user.role);
       }
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please check your information.');
+      setError(err.message || t('auth.registrationFailed', 'Registration failed. Please check your information.'));
       setIsSubmitting(false);
     }
   };
@@ -193,7 +193,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
   const handleResendConfirmation = async (targetEmail?: string) => {
     const emailToResend = targetEmail || unconfirmedEmail || loginEmail || regEmail;
     if (!emailToResend) {
-      setError('Please provide your email address to receive the confirmation link.');
+      setError(t('auth.emailRequiredForConfirmation', 'Please provide your email address to receive the confirmation link.'));
       return;
     }
 
@@ -204,10 +204,10 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
 
     try {
       const res = await resendConfirmation(emailToResend.trim().toLowerCase());
-      setInfoNotice(res.message || 'If an unconfirmed account exists, a new verification link has been sent.');
+      setInfoNotice(res.message || t('auth.confirmationLinkSent', 'If an unconfirmed account exists, a new verification link has been sent.'));
       setResendCooldown(60);
     } catch (err: any) {
-      setError(err.message || 'Failed to resend confirmation email. Please try again later.');
+      setError(err.message || t('auth.resendConfirmationFailed', 'Failed to resend confirmation email. Please try again later.'));
     } finally {
       setIsResending(false);
     }
@@ -221,10 +221,10 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
 
     try {
       const res = await forgotPassword(recoveryEmail.trim().toLowerCase());
-      setInfoNotice(res.message || 'If this email is registered, recovery instructions have been sent.');
+      setInfoNotice(res.message || t('auth.recoveryInstructionsSent', 'If this email is registered, recovery instructions have been sent.'));
       setResendCooldown(60);
     } catch (err: any) {
-      setError(err.message || 'Failed to dispatch recovery request. Please try again.');
+      setError(err.message || t('auth.recoveryRequestFailed', 'Failed to dispatch recovery request. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -236,26 +236,26 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
     setError(null);
 
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters long.');
+      setError(t('auth.newPasswordMinLength', 'New password must be at least 8 characters long.'));
       setIsSubmitting(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match. Please re-enter.');
+      setError(t('auth.passwordsDoNotMatch', 'Passwords do not match. Please re-enter.'));
       setIsSubmitting(false);
       return;
     }
 
     try {
       const res = await resetPassword(newPassword, recoveryToken || undefined);
-      setInfoNotice(res.message || 'Password updated successfully! Please sign in with your new password.');
+      setInfoNotice(res.message || t('auth.passwordUpdated', 'Password updated successfully! Please sign in with your new password.'));
       setMode('login');
       setNewPassword('');
       setConfirmPassword('');
       setRecoveryToken(null);
     } catch (err: any) {
-      setError(err.message || 'Password reset failed or token expired. Please request a new link.');
+      setError(err.message || t('auth.passwordResetFailed', 'Password reset failed or token expired. Please request a new link.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -360,7 +360,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
             </span>
           </label>
           <span className="text-[11px] text-stone-500 font-medium">
-            {mode === 'register' ? 'Farmers & Equipment Owners only' : 'Secure email + password verification'}
+            {mode === 'register' ? t('auth.registrationRolesOnly', 'Farmers & Equipment Owners only') : t('auth.secureEmailVerification', 'Secure email + password verification')}
           </span>
         </div>
 
@@ -527,7 +527,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                   disabled={resendCooldown > 0 || isResending}
                   className="px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-900 font-bold rounded-lg transition disabled:opacity-50 shrink-0 text-[11px]"
                 >
-                  {resendCooldown > 0 ? `Resend (${resendCooldown}s)` : isResending ? 'Sending...' : 'Resend Email'}
+                  {resendCooldown > 0 ? t('auth.resendCountdown', 'Resend ({seconds}s)').replace('{seconds}', String(resendCooldown)) : isResending ? t('auth.sending', 'Sending...') : t('auth.resendEmail', 'Resend Email')}
                 </button>
               )}
             </div>
@@ -552,7 +552,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="farmer@example.com"
+                    placeholder={t('auth.emailPlaceholder', 'farmer@example.com')}
                     required
                     autoComplete="email"
                     className="w-full pl-10 pr-4 py-3 text-xs sm:text-sm border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/30"
@@ -583,7 +583,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     type={showPassword ? 'text' : 'password'}
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={t('auth.passwordPlaceholder', '••••••••')}
                     required
                     autoComplete="current-password"
                     className="w-full pl-10 pr-10 py-3 text-xs sm:text-sm border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/30"
@@ -641,7 +641,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
               </div>
 
               {/* Profile picture - internal account setup field */}
-              <ProfilePhotoPicker value={regAvatar} onChange={setRegAvatar} label="Profile Picture" />
+              <ProfilePhotoPicker value={regAvatar} onChange={setRegAvatar} label={t('auth.profilePicture', 'Profile Picture')} />
 
               {/* Name */}
               <div>
@@ -653,7 +653,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     type="text"
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
-                    placeholder="e.g. Ramesh Patel"
+                    placeholder={t('auth.namePlaceholder', 'e.g. Ramesh Patel')}
                     required
                     className="w-full pl-9 pr-3 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
@@ -672,7 +672,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                       type="tel"
                       value={regPhone}
                       onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      placeholder="9876543210"
+                      placeholder={t('auth.mobilePlaceholder', '9876543210')}
                       required
                       minLength={10}
                       maxLength={10}
@@ -683,7 +683,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     />
                     <Phone className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
                   </div>
-                  <p className="text-[10px] text-stone-400 mt-1">Enter exactly 10 digits.</p>
+                  <p className="text-[10px] text-stone-400 mt-1">{t('auth.mobileHint', 'Enter exactly 10 digits.')}</p>
                 </div>
 
                 <div>
@@ -695,7 +695,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                       type="email"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
-                      placeholder="ramesh@agri.com"
+                      placeholder={t('auth.registrationEmailPlaceholder', 'ramesh@agri.com')}
                       required
                       className="w-full pl-9 pr-3 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     />
@@ -716,7 +716,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     required
                     className="w-full px-3 py-2 border border-stone-300 rounded-xl bg-white focus:ring-1 focus:ring-emerald-500"
                   >
-                    <option value="">Select State</option>
+                    <option value="">{t('auth.selectState', 'Select State')}</option>
                     {INDIA_STATES_AND_UTS.map(state => <option key={state} value={state}>{state}</option>)}
                   </select>
                 </div>
@@ -731,7 +731,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     disabled={!regState}
                     className="w-full px-3 py-2 border border-stone-300 rounded-xl bg-white disabled:bg-stone-100 disabled:text-stone-400 focus:ring-1 focus:ring-emerald-500"
                   >
-                    <option value="">{regState ? 'Select District' : 'Select State First'}</option>
+                    <option value="">{regState ? t('auth.selectDistrict', 'Select District') : t('auth.selectStateFirst', 'Select State First')}</option>
                     {getDistrictsForState(regState).map(district => <option key={district} value={district}>{district}</option>)}
                   </select>
                 </div>
@@ -743,7 +743,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     type="text"
                     value={regVillage}
                     onChange={(e) => setRegVillage(e.target.value)}
-                    placeholder="Enter village or tehsil"
+                    placeholder={t('auth.villagePlaceholder', 'Enter village or tehsil')}
                     className="w-full px-3 py-2 border border-stone-300 rounded-xl focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
@@ -759,7 +759,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     type="text"
                     value={regLandAcreage}
                     onChange={(e) => setRegLandAcreage(e.target.value)}
-                    placeholder="e.g. 10 Acres"
+                    placeholder={t('auth.acreagePlaceholder', 'e.g. 10 Acres')}
                     className="w-full px-3 py-2 border border-stone-300 rounded-xl focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
@@ -772,7 +772,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     type="text"
                     value={regFleetType}
                     onChange={(e) => setRegFleetType(e.target.value)}
-                    placeholder="e.g. 2 Tractors (50 HP), Rotavator, Super Seeder"
+                    placeholder={t('auth.fleetPlaceholder', 'e.g. 2 Tractors (50 HP), Rotavator, Super Seeder')}
                     className="w-full px-3 py-2 border border-stone-300 rounded-xl focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
@@ -781,12 +781,12 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
               {/* Bio / Description */}
               <div>
                 <label className="block font-semibold text-stone-700 mb-1">
-                  Bio / Farm Summary (Optional)
+                  {t('auth.bioSummary', 'Bio / Farm Summary (Optional)')}
                 </label>
                 <textarea
                   value={regBio}
                   onChange={(e) => setRegBio(e.target.value)}
-                  placeholder="Share a short note about your agricultural work or machinery operations..."
+                  placeholder={t('auth.bioPlaceholder', 'Share a short note about your agricultural work or machinery operations...')}
                   rows={2}
                   className="w-full px-3 py-2 border border-stone-300 rounded-xl focus:ring-1 focus:ring-emerald-500 text-xs"
                 />
@@ -798,14 +798,14 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                   <label className="block font-bold text-stone-700 uppercase tracking-wider">
                     {t('auth.createPassword', 'Create Password')} *
                   </label>
-                  <span className="text-[10px] text-stone-500">Minimum 8 characters</span>
+                  <span className="text-[10px] text-stone-500">{t('auth.minimumEightCharacters', 'Minimum 8 characters')}</span>
                 </div>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
-                    placeholder="At least 8 characters"
+                    placeholder={t('auth.passwordPlaceholder', 'At least 8 characters')}
                     required
                     minLength={8}
                     className="w-full pl-9 pr-10 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -851,19 +851,19 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                 <Mail className="w-8 h-8 text-emerald-700" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-bold text-stone-900">Check Your Email</h3>
+                <h3 className="text-lg font-bold text-stone-900">{t('auth.checkEmail', 'Check Your Email')}</h3>
                 <p className="text-xs text-stone-600 max-w-sm mx-auto">
-                  We've sent a verification link to <span className="font-bold text-stone-800">{unconfirmedEmail}</span>. Click the link in your inbox to confirm your account.
+                  {t('auth.verificationLinkSentTo', "We've sent a verification link to")} <span className="font-bold text-stone-800">{unconfirmedEmail}</span>. {t('auth.clickVerificationLink', 'Click the link in your inbox to confirm your account.')}
                 </p>
               </div>
 
               <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 text-xs text-stone-600 max-w-sm mx-auto text-left space-y-2">
                 <div className="flex items-center gap-2 font-semibold text-stone-800">
                   <Clock className="w-4 h-4 text-amber-600" />
-                  <span>Didn't receive the email?</span>
+                  <span>{t('auth.didntReceiveEmail', "Didn't receive the email?")}</span>
                 </div>
                 <p className="text-[11px]">
-                  Check your spam/junk folder. If it hasn't arrived within a minute, you can dispatch a new verification link below.
+                  {t('auth.checkSpam', "Check your spam/junk folder. If it hasn't arrived within a minute, you can dispatch a new verification link below.")}
                 </p>
                 <button
                   type="button"
@@ -874,10 +874,10 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                   <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
                   <span>
                     {resendCooldown > 0
-                      ? `Resend available in ${resendCooldown}s`
+                      ? t('auth.resendAvailableIn', 'Resend available in {seconds}s').replace('{seconds}', String(resendCooldown))
                       : isResending
-                      ? 'Sending Verification...'
-                      : 'Resend Verification Email'}
+                      ? t('auth.sendingVerification', 'Sending Verification...')
+                      : t('auth.resendVerificationEmail', 'Resend Verification Email')}
                   </span>
                 </button>
               </div>
@@ -887,11 +887,11 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                 onClick={() => {
                   setMode('login');
                   setError(null);
-                  setInfoNotice('Once confirmed, log in with your email and password below.');
+                  setInfoNotice(t('auth.confirmedLoginHint', 'Once confirmed, log in with your email and password below.'));
                 }}
                 className="text-xs text-emerald-800 font-bold hover:underline cursor-pointer inline-flex items-center gap-1"
               >
-                <span>Back to Sign In</span>
+                <span>{t('auth.backToSignIn', 'Back to Sign In')}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -901,9 +901,9 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
           {mode === 'forgot-password' && (
             <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-stone-900">Reset Your Password</h3>
+                <h3 className="text-sm font-bold text-stone-900">{t('auth.resetPasswordTitle', 'Reset Your Password')}</h3>
                 <p className="text-xs text-stone-600">
-                  Enter your registered account email. If an account is associated with this email, a secure password recovery link will be sent.
+                  {t('auth.resetPasswordDescription', 'Enter your registered account email. If an account is associated with this email, a secure password recovery link will be sent.')}
                 </p>
               </div>
 
@@ -916,7 +916,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                     type="email"
                     value={recoveryEmail}
                     onChange={(e) => setRecoveryEmail(e.target.value)}
-                    placeholder="farmer@example.com"
+                    placeholder={t('auth.emailPlaceholder', 'farmer@example.com')}
                     required
                     className="w-full pl-10 pr-4 py-3 text-xs sm:text-sm border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
@@ -930,12 +930,12 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                 className="w-full py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm rounded-xl shadow-md transition disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
-                  <span>Sending Link...</span>
+                  <span>{t('auth.sendingLink', 'Sending Link...')}</span>
                 ) : resendCooldown > 0 ? (
-                  <span>Wait {resendCooldown}s before retrying</span>
+                  <span>{t('auth.waitBeforeRetry', 'Wait {seconds}s before retrying').replace('{seconds}', String(resendCooldown))}</span>
                 ) : (
                   <>
-                    <span>Send Password Reset Instructions</span>
+                    <span>{t('auth.sendResetInstructions', 'Send Password Reset Instructions')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -950,7 +950,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                   }}
                   className="text-xs text-emerald-800 font-bold hover:underline cursor-pointer"
                 >
-                  ← Return to Sign In
+                  ← {t('auth.returnToSignIn', 'Return to Sign In')}
                 </button>
               </div>
             </form>
@@ -960,22 +960,22 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
           {mode === 'reset-password' && (
             <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-stone-900">Set a New Password</h3>
+                <h3 className="text-sm font-bold text-stone-900">{t('auth.setNewPassword', 'Set a New Password')}</h3>
                 <p className="text-xs text-stone-600">
-                  Please choose a strong password with at least 8 characters.
+                  {t('auth.strongPasswordHint', 'Please choose a strong password with at least 8 characters.')}
                 </p>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-                  New Password *
+                  {t('auth.newPassword', 'New Password')} *
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={t('auth.passwordPlaceholder', '••••••••')}
                     required
                     minLength={8}
                     className="w-full pl-10 pr-10 py-3 text-xs sm:text-sm border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -993,14 +993,14 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-                  Confirm New Password *
+                  {t('auth.confirmNewPassword', 'Confirm New Password')} *
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={t('auth.passwordPlaceholder', '••••••••')}
                     required
                     minLength={8}
                     className="w-full pl-10 pr-10 py-3 text-xs sm:text-sm border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -1015,10 +1015,10 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                 className="w-full py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm rounded-xl shadow-md transition disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
-                  <span>Updating Password...</span>
+                  <span>{t('auth.updatingPassword', 'Updating Password...')}</span>
                 ) : (
                   <>
-                    <span>Update Password & Proceed to Login</span>
+                    <span>{t('auth.updatePasswordAndLogin', 'Update Password & Proceed to Login')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -1072,7 +1072,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
             </p>
             <div className="pt-2 flex items-center justify-between text-[11px] text-stone-400 border-t border-stone-800">
               <span>🇮🇳 {t('auth.govtCompliant', 'Custom Hiring Centers (CHC) Compliant')}</span>
-              <span className="text-emerald-400 font-bold">256-Bit SSL</span>
+              <span className="text-emerald-400 font-bold">{t('auth.sslBadge', '256-Bit SSL')}</span>
             </div>
           </div>
 
@@ -1087,12 +1087,12 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                   {t('auth.kisanHelpline', 'Kisan Support Desk')}
                 </span>
                 <span className="font-bold text-xs text-stone-900">
-                  1800-180-1551 (Toll-Free)
+                  {t('auth.tollFree', '1800-180-1551 (Toll-Free)')}
                 </span>
               </div>
             </div>
             <span className="text-[10px] font-bold text-stone-600 bg-white px-2 py-1 rounded-lg border border-amber-200">
-              6 AM - 10 PM
+              {t('auth.supportHours', '6 AM - 10 PM')}
             </span>
           </div>
 

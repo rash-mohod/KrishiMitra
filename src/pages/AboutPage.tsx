@@ -21,12 +21,12 @@ export const AboutPage: React.FC = () => {
         <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
           {t(
             'about.subtitle',
-            'Over 85% of Indian farmers operate on small and marginal landholdings, making heavy machinery ownership financially unviable. Krishi Mitra bridges this gap with on-demand, peer-to-peer equipment rentals.'
+            'Krishi Mitra is a web-based farm equipment rental platform that connects farmers with equipment owners, making agricultural machinery easier to discover, book, and rent through a transparent digital workflow.'
           )}
         </p>
       </div>
 
-      {/* Pillars */}
+      {/* Platform Pillars */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
         {/* Mission */}
@@ -42,25 +42,25 @@ export const AboutPage: React.FC = () => {
           <p className="text-xs text-stone-600 leading-relaxed">
             {t(
               'about.missionDesc',
-              'To increase crop yields by 25% and reduce input labor costs by 40% through timely access to modern farm machinery without capital debt.'
+              'To make agricultural machinery easier to access by connecting farmers with local equipment owners through a simple, transparent, and convenient rental platform.'
             )}
           </p>
         </div>
 
-        {/* Fleet Monetization */}
+        {/* Equipment Owner Benefits */}
         <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-xs space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold">
             <Tractor className="w-6 h-6" />
           </div>
 
           <h3 className="font-display font-bold text-lg text-stone-900">
-            {t('about.monetization', 'Fleet Monetization')}
+            {t('about.monetization', 'Equipment Owner Benefits')}
           </h3>
 
           <p className="text-xs text-stone-600 leading-relaxed">
             {t(
               'about.monetizationDesc',
-              'Helping progressive tractor owners and Custom Hiring Centers achieve up to 300% higher asset utilization during sowing and harvest cycles.'
+              'Helping equipment owners list their machinery, set rental rates, manage booking requests, and make their available equipment accessible to farmers.'
             )}
           </p>
         </div>
@@ -78,7 +78,7 @@ export const AboutPage: React.FC = () => {
           <p className="text-xs text-stone-600 leading-relaxed">
             {t(
               'about.trustedEcoDesc',
-              'Building trust through document verification, transparent booking and cancellation rules, and decentralized State Ag Extension dispute resolution.'
+              'Building trust through equipment and profile information, transparent rental details, booking management, payment verification, and ratings and reviews.'
             )}
           </p>
         </div>

@@ -147,7 +147,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     });
 
     const unsubMsgDeleted = wsClient.on('message:deleted', (data: { messageId: string; deletedAt: string }) => {
-      setMessages(prev => prev.map(m => m.id === data.messageId ? { ...m, deletedAt: data.deletedAt, content: 'This message was deleted.', attachmentUrl: undefined } : m));
+      setMessages(prev => prev.map(m => m.id === data.messageId ? { ...m, deletedAt: data.deletedAt, content: t('chat.messageDeleted', 'This message was deleted.'), attachmentUrl: undefined } : m));
     });
 
     const unsubMsgReaction = wsClient.on('message:reaction', (data: { messageId: string; reactions: Record<string, string> }) => {
@@ -555,10 +555,10 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   };
 
   const handleDeleteMessage = async (msgId: string) => {
-    if (!window.confirm('Delete this message?')) return;
+    if (!window.confirm(t('chat.deleteConfirm', 'Delete this message?'))) return;
     try {
       await chatApi.deleteMessage(msgId);
-      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, deletedAt: new Date().toISOString(), content: 'This message was deleted.', attachmentUrl: undefined } : m));
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, deletedAt: new Date().toISOString(), content: t('chat.messageDeleted', 'This message was deleted.'), attachmentUrl: undefined } : m));
     } catch (err) {
       console.error('Failed to delete message:', err);
     }
@@ -581,7 +581,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     setIsSubmittingReport(true);
     try {
       await chatApi.reportMessage(reportModalMessage.id, reportReason, reportDescription);
-      setReportSuccessMsg('Report submitted to moderation desk.');
+      setReportSuccessMsg(t('chat.reportSubmitted', 'Report submitted to moderation desk.'));
       setTimeout(() => {
         setReportModalMessage(null);
         setReportSuccessMsg(null);
@@ -662,15 +662,15 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             </span>
             <span className="flex items-center gap-1.5 text-xs text-stone-500 font-medium">
               <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-              <span>{wsConnected ? 'Real-time Connected' : 'Syncing'}</span>
+              <span>{wsConnected ? t('chat.realtimeConnected', 'Real-time Connected') : t('chat.syncing', 'Syncing')}</span>
             </span>
           </div>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-stone-900 mt-1">
             {user?.role === 'FARMER'
-              ? 'Direct Machinery Owner & Desk Chat'
+              ? t('chat.farmerHeading', 'Direct Machinery Owner & Desk Chat')
               : user?.role === 'OWNER'
-              ? 'Farmer Inquiries & Fleet Dispatch Chat'
-              : 'Agri Support Desk & Moderation Inbox'}
+              ? t('chat.ownerHeading', 'Farmer Inquiries & Fleet Dispatch Chat')
+              : t('chat.adminHeading', 'Agri Support Desk & Moderation Inbox')}
           </h1>
         </div>
 
@@ -678,7 +678,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           {user && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 rounded-xl border border-stone-200 text-xs">
-              <span className="text-stone-500 font-medium">Logged in as:</span>
+              <span className="text-stone-500 font-medium">{t('chat.loggedInAs', 'Logged in as:')}</span>
               <span className="font-bold text-stone-900 truncate max-w-[120px]">{user.name}</span>
               <span className="text-[10px] bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded font-bold">
                 {user.role}
@@ -695,7 +695,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
               className="px-3.5 py-2 bg-stone-900 hover:bg-black text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <LifeBuoy className="w-4 h-4 text-amber-400" />
-              <span>Agri Support Desk</span>
+              <span>{t('chat.supportDesk', 'Agri Support Desk')}</span>
             </button>
           )}
 
@@ -707,7 +707,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <Edit3 className="w-4 h-4" />
-            <span>Compose Message</span>
+            <span>{t('chat.composeMessage', 'Compose Message')}</span>
           </button>
         </div>
       </div>
@@ -731,7 +731,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search chats, machinery, bookings..."
+                  placeholder={t('chat.searchPlaceholder', 'Search chats, machinery, bookings...')}
                   className="w-full pl-9 pr-3 py-2 bg-stone-100 border border-stone-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 transition"
                 />
                 {searchQuery && (
@@ -747,7 +747,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
               <button
                 onClick={() => setNewChatModalOpen(true)}
                 className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl transition cursor-pointer shrink-0"
-                title="Start Direct Chat"
+                title={t('chat.startDirectChat', 'Start Direct Chat')}
               >
                 <UserPlus className="w-4 h-4" />
               </button>
@@ -761,7 +761,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   filterType === 'ALL' ? 'bg-white text-stone-900 shadow-xs font-bold' : 'hover:text-stone-900'
                 }`}
               >
-                All
+                {t('chat.filterAll', 'All')}
               </button>
               <button
                 onClick={() => setFilterType('EQUIPMENT')}
@@ -769,7 +769,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   filterType === 'EQUIPMENT' ? 'bg-white text-emerald-800 shadow-xs font-bold' : 'hover:text-stone-900'
                 }`}
               >
-                Rentals
+                {t('chat.filterRentals', 'Rentals')}
               </button>
               <button
                 onClick={() => setFilterType('SUPPORT')}
@@ -777,7 +777,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   filterType === 'SUPPORT' ? 'bg-white text-stone-900 shadow-xs font-bold' : 'hover:text-stone-900'
                 }`}
               >
-                Support
+                {t('chat.filterSupport', 'Support')}
               </button>
               <button
                 onClick={() => setFilterType('DISPUTES')}
@@ -785,7 +785,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   filterType === 'DISPUTES' ? 'bg-white text-amber-800 shadow-xs font-bold' : 'hover:text-stone-900'
                 }`}
               >
-                Disputes
+                {t('chat.filterDisputes', 'Disputes')}
               </button>
               <button
                 onClick={() => setFilterType('ARCHIVED')}
@@ -793,7 +793,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   filterType === 'ARCHIVED' ? 'bg-white text-stone-900 shadow-xs font-bold' : 'hover:text-stone-900'
                 }`}
               >
-                Archived
+                {t('chat.filterArchived', 'Archived')}
               </button>
             </div>
           </div>
@@ -803,7 +803,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             {isLoadingConvs ? (
               <div className="p-8 text-center text-xs text-stone-500 space-y-2">
                 <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p>Loading personal conversations...</p>
+                <p>{t('chat.loadingConversations', 'Loading personal conversations...')}</p>
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="p-6 text-center space-y-3">
@@ -811,16 +811,16 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   <MessageSquare className="w-6 h-6" />
                 </div>
                 <p className="text-xs font-bold text-stone-800">
-                  {filterType === 'ARCHIVED' ? 'No archived conversations' : 'No conversations found'}
+                  {filterType === 'ARCHIVED' ? t('chat.noArchived', 'No archived conversations') : t('chat.noConversations', 'No conversations found')}
                 </p>
                 <p className="text-[11px] text-stone-500 max-w-[200px] mx-auto">
-                  Message a verified tractor owner or the Krishi Mitra Agri Desk directly.
+                  {t('chat.emptyHint', 'Message a verified tractor owner or the Krishi Mitra Agri Desk directly.')}
                 </p>
                 <button
                   onClick={() => setNewChatModalOpen(true)}
                   className="px-3.5 py-2 bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-emerald-800 transition cursor-pointer shadow-xs"
                 >
-                  + New Chat
+                  + {t('chat.newChat', 'New Chat')}
                 </button>
               </div>
             ) : (
@@ -879,7 +879,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                           </span>
                         ) : isAdmin ? (
                           <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
-                            Agri Extension Desk
+                            {t('chat.agriExtensionDesk', 'Agri Extension Desk')}
                           </span>
                         ) : conv.equipmentName ? (
                           <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/70 px-1.5 py-0.2 rounded truncate max-w-[170px]">
@@ -894,14 +894,14 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
                       {isTyping ? (
                         <p className="text-[11px] font-bold text-emerald-700 animate-pulse flex items-center gap-1">
-                          <span>typing...</span>
+                          <span>{t('chat.typing', 'typing...')}</span>
                         </p>
                       ) : (
                         <p className={`text-[11px] truncate leading-tight ${
                           unread > 0 ? 'font-bold text-stone-900' : 'text-stone-500'
                         }`}>
                           {conv.lastMessageSenderId === user?.id && (
-                            <span className="text-stone-400 font-normal">You: </span>
+                            <span className="text-stone-400 font-normal">{t('chat.youPrefix', 'You: ')}</span>
                           )}
                           {conv.lastMessage}
                         </p>
@@ -967,10 +967,10 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                           : 'bg-blue-100 text-blue-800'
                       }`}>
                         {activeCounterpart.role === 'ADMIN'
-                          ? 'Agri Support Desk'
+                          ? t('chat.agriSupportDesk', 'Agri Support Desk')
                           : activeCounterpart.role === 'OWNER'
-                          ? 'Fleet Owner'
-                          : 'Farmer'}
+                          ? t('chat.fleetOwner', 'Fleet Owner')
+                          : t('chat.farmer', 'Farmer')}
                       </span>
                     </div>
 
@@ -978,11 +978,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                       {activeCounterpart.isOnline ? (
                         <span className="flex items-center gap-1 text-emerald-600 font-bold">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          Online Now
+                          {t('chat.onlineNow', 'Online Now')}
                         </span>
                       ) : (
                         <span className="text-stone-400">
-                          {activeCounterpart.lastSeen ? `Last active ${new Date(activeCounterpart.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Offline'}
+                          {activeCounterpart.lastSeen ? `${t('chat.lastActive', 'Last active')} ${new Date(activeCounterpart.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : t('chat.offline', 'Offline')}
                         </span>
                       )}
                       {activeCounterpart.location && (
@@ -1001,7 +1001,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   <button
                     onClick={() => setInChatSearchOpen(!inChatSearchOpen)}
                     className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-xl transition cursor-pointer"
-                    title="Search messages"
+                    title={t('chat.searchMessages', 'Search messages')}
                   >
                     <Search className="w-4 h-4" />
                   </button>
@@ -1011,7 +1011,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                       <a
                         href={`tel:${activeCounterpart.phone}`}
                         className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs rounded-xl border border-stone-200 transition flex items-center gap-1"
-                        title={`Call ${activeCounterpart.name}`}
+                        title={`${t('chat.call', 'Call')} ${activeCounterpart.name}`}
                       >
                         <Phone className="w-3.5 h-3.5 text-emerald-700" />
                         <span className="hidden md:inline">{activeCounterpart.phone}</span>
@@ -1024,7 +1024,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                     <button
                       onClick={() => setConvMenuOpen(!convMenuOpen)}
                       className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-xl transition cursor-pointer"
-                      title="More Options"
+                      title={t('chat.moreOptions', 'More Options')}
                     >
                       <MoreVertical className="w-4 h-4" />
                     </button>
@@ -1036,14 +1036,14 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                           className="w-full px-3.5 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 cursor-pointer font-medium"
                         >
                           <Archive className="w-3.5 h-3.5 text-stone-500" />
-                          <span>{myParticipant?.isArchived ? 'Unarchive Chat' : 'Archive Chat'}</span>
+                          <span>{myParticipant?.isArchived ? t('chat.unarchive', 'Unarchive Chat') : t('chat.archive', 'Archive Chat')}</span>
                         </button>
                         <button
                           onClick={handleToggleMute}
                           className="w-full px-3.5 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 cursor-pointer font-medium"
                         >
                           {myParticipant?.isMuted ? <Bell className="w-3.5 h-3.5 text-stone-500" /> : <BellOff className="w-3.5 h-3.5 text-stone-500" />}
-                          <span>{myParticipant?.isMuted ? 'Unmute Notifications' : 'Mute Notifications'}</span>
+                          <span>{myParticipant?.isMuted ? t('chat.unmute', 'Unmute Notifications') : t('chat.mute', 'Mute Notifications')}</span>
                         </button>
                         <button
                           onClick={() => {
@@ -1053,7 +1053,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                           className="w-full px-3.5 py-2 text-left text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2 cursor-pointer font-medium"
                         >
                           <Download className="w-3.5 h-3.5 text-stone-500" />
-                          <span>Export Transcript</span>
+                          <span>{t('chat.exportTranscript', 'Export Transcript')}</span>
                         </button>
                       </div>
                     )}
@@ -1069,7 +1069,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                     type="text"
                     value={inChatSearchQuery}
                     onChange={e => setInChatSearchQuery(e.target.value)}
-                    placeholder="Search inside this conversation..."
+                    placeholder={t('chat.searchInside', 'Search inside this conversation...')}
                     className="flex-1 px-3 py-1 bg-white border border-stone-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     autoFocus
                   />
@@ -1090,10 +1090,10 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                 <div className="px-5 py-2.5 bg-red-50 border-b border-red-200 flex items-center justify-between gap-3 text-xs shrink-0">
                   <div className="flex items-center gap-2 text-red-900 font-bold">
                     <ShieldAlert className="w-4 h-4 text-red-600" />
-                    <span>Dispute Arbitration Channel #{activeConversation.disputeCode}</span>
+                    <span>{t('chat.disputeChannel', 'Dispute Arbitration Channel')} #{activeConversation.disputeCode}</span>
                   </div>
                   <span className="text-[11px] bg-red-100 text-red-800 px-2 py-0.5 rounded font-semibold">
-                    Admin Mediated
+                    {t('chat.adminMediated', 'Admin Mediated')}
                   </span>
                 </div>
               ) : activeConversation.equipmentId && activeConversation.equipmentName ? (
@@ -1129,7 +1129,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                         onClick={() => onViewEquipment(activeConversation.equipmentId!)}
                         className="px-3 py-1.5 bg-white border border-stone-300 hover:border-emerald-500 text-stone-700 rounded-lg font-bold text-xs transition cursor-pointer"
                       >
-                        View Specs
+                        {t('chat.viewSpecs', 'View Specs')}
                       </button>
                     )}
                     {user?.role === 'FARMER' && onViewEquipment && (
@@ -1137,7 +1137,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                         onClick={() => onViewEquipment(activeConversation.equipmentId!)}
                         className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-xs transition shadow-2xs cursor-pointer"
                       >
-                        Book Machine
+                        {t('chat.bookMachine', 'Book Machine')}
                       </button>
                     )}
                   </div>
@@ -1151,14 +1151,14 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                 <div className="text-center my-1">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-200/60 text-stone-600 text-[11px] font-medium">
                     <Shield className="w-3 h-3 text-emerald-600" />
-                    Direct communication between {user.name} and {activeCounterpart.name}
+                    {t('chat.directCommunicationBetween', 'Direct communication between')} {user.name} {t('chat.and', 'and')} {activeCounterpart.name}
                   </span>
                 </div>
 
                 {isLoadingMessages ? (
                   <div className="p-12 text-center text-xs text-stone-400 space-y-2">
                     <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p>Loading messages...</p>
+                    <p>{t('chat.loadingMessages', 'Loading messages...')}</p>
                   </div>
                 ) : filteredMessages.length === 0 ? (
                   <div className="text-center py-12 space-y-3">
@@ -1172,7 +1172,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                       Direct Personal Chat with {activeCounterpart.name}
                     </h4>
                     <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                      Discuss field schedule, driver allowance, soil condition, or machinery delivery details.
+                      {t('chat.emptyChatDescription', 'Discuss field schedule, driver allowance, soil condition, or machinery delivery details.')}
                     </p>
                   </div>
                 ) : (
@@ -1212,7 +1212,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                             <div className={`text-[10px] p-2 rounded-xl border-l-3 mb-1 truncate ${
                               isMe ? 'bg-emerald-800/60 text-emerald-100 border-emerald-300' : 'bg-stone-100 text-stone-600 border-emerald-600'
                             }`}>
-                              <span className="font-bold">{msg.replyToSenderName || 'Replying to'}: </span>
+                              <span className="font-bold">{msg.replyToSenderName || t('chat.replyingTo', 'Replying to')}: </span>
                               <span className="italic">{msg.replyToMessageSnippet}</span>
                             </div>
                           )}
@@ -1230,7 +1230,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                                 {msg.attachmentType === 'IMAGE' ? (
                                   <img
                                     src={msg.attachmentUrl}
-                                    alt="Shared attachment"
+                                    alt={t('chat.sharedAttachment', 'Shared attachment')}
                                     className="max-h-48 w-full object-cover"
                                   />
                                 ) : (
@@ -1240,7 +1240,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                                     className="p-3 bg-stone-100 text-stone-800 flex items-center gap-2 hover:bg-stone-200 transition"
                                   >
                                     <FileText className="w-5 h-5 text-emerald-700 shrink-0" />
-                                    <span className="font-bold text-[11px] truncate">{msg.attachmentName || 'Download Document'}</span>
+                                    <span className="font-bold text-[11px] truncate">{msg.attachmentName || t('chat.downloadDocument', 'Download Document')}</span>
                                   </a>
                                 )}
                               </div>
@@ -1259,13 +1259,13 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                                     onClick={() => setEditingMessageId(null)}
                                     className="px-2 py-1 text-[10px] bg-stone-200 text-stone-800 rounded font-bold"
                                   >
-                                    Cancel
+                                    {t('common.cancel', 'Cancel')}
                                   </button>
                                   <button
                                     onClick={() => handleSaveEditMessage(msg.id)}
                                     className="px-2 py-1 text-[10px] bg-emerald-900 text-white rounded font-bold"
                                   >
-                                    Save
+                                    {t('common.save', 'Save')}
                                   </button>
                                 </div>
                               </div>
@@ -1280,7 +1280,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                               isMe ? 'text-emerald-200' : 'text-stone-400'
                             }`}>
                               {msg.editedAt && (
-                                <span className="italic">(edited)</span>
+                                <span className="italic">({t('chat.edited', 'edited')})</span>
                               )}
                               <span>
                                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -1321,7 +1321,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                             <button
                               onClick={() => setActiveReactionPickerId(activeReactionPickerId === msg.id ? null : msg.id)}
                               className="p-1 hover:text-amber-500 hover:bg-stone-100 rounded-lg cursor-pointer"
-                              title="Add reaction"
+                              title={t('chat.addReaction', 'Add reaction')}
                             >
                               <Smile className="w-3.5 h-3.5" />
                             </button>
@@ -1330,7 +1330,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                             <button
                               onClick={() => setReplyingToMessage(msg)}
                               className="p-1 hover:text-emerald-700 hover:bg-stone-100 rounded-lg cursor-pointer"
-                              title="Reply"
+                              title={t('chat.reply', 'Reply')}
                             >
                               <CornerUpLeft className="w-3.5 h-3.5" />
                             </button>
@@ -1343,7 +1343,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                                   setEditingContent(msg.content);
                                 }}
                                 className="p-1 hover:text-emerald-700 hover:bg-stone-100 rounded-lg cursor-pointer"
-                                title="Edit message"
+                                title={t('chat.editMessage', 'Edit message')}
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
@@ -1354,7 +1354,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                               <button
                                 onClick={() => handleDeleteMessage(msg.id)}
                                 className="p-1 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
-                                title="Delete message"
+                                title={t('chat.deleteMessage', 'Delete message')}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -1365,7 +1365,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                               <button
                                 onClick={() => setReportModalMessage(msg)}
                                 className="p-1 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
-                                title="Report message"
+                                title={t('chat.reportMessage', 'Report message')}
                               >
                                 <Flag className="w-3.5 h-3.5" />
                               </button>
@@ -1396,7 +1396,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                 {Object.keys(typingUsers).length > 0 && (
                   <div className="flex items-center gap-2 text-stone-500 text-xs py-1 italic animate-pulse">
                     <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping" />
-                    <span>{Object.values(typingUsers).join(', ')} is typing... ✍️</span>
+                    <span>{Object.values(typingUsers).join(', ')} {t('chat.isTyping', 'is typing... ✍️')}</span>
                   </div>
                 )}
 
@@ -1406,7 +1406,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
               {/* Quick Field Actions Bar */}
               <div className="px-4 py-2 bg-stone-100/80 border-t border-stone-200 overflow-x-auto flex items-center gap-2 text-xs shrink-0 no-scrollbar">
                 <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider shrink-0">
-                  Quick Inquiries:
+                  {t('chat.quickInquiries', 'Quick Inquiries:')}
                 </span>
                 
                 <button
@@ -1415,7 +1415,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   className="px-2.5 py-1 bg-white hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-stone-700 rounded-full border border-stone-200 text-[11px] font-medium whitespace-nowrap transition cursor-pointer flex items-center gap-1 shadow-2xs"
                 >
                   <MapPin className="w-3 h-3 text-emerald-600" />
-                  <span>Share Farm Location</span>
+                  <span>{t('chat.shareFarmLocation', 'Share Farm Location')}</span>
                 </button>
 
                 <button
@@ -1449,7 +1449,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   <div className="flex items-center gap-2 truncate">
                     <CornerUpLeft className="w-4 h-4 text-emerald-700 shrink-0" />
                     <div className="truncate">
-                      <span className="font-bold text-emerald-950">Replying to {replyingToMessage.senderName}: </span>
+                      <span className="font-bold text-emerald-950">{t('chat.replyingTo', 'Replying to')} {replyingToMessage.senderName}: </span>
                       <span className="text-emerald-800 truncate">{replyingToMessage.content}</span>
                     </div>
                   </div>
@@ -1503,7 +1503,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="p-2.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-xl transition cursor-pointer"
-                    title="Attach Farm Photo or Document"
+                    title={t('chat.attachFarmFile', 'Attach Farm Photo or Document')}
                   >
                     <Paperclip className="w-4 h-4" />
                   </button>
@@ -1518,7 +1518,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                         handleSendMessage();
                       }
                     }}
-                    placeholder={`Type your message to ${activeCounterpart.name}...`}
+                    placeholder={`${t('chat.typeMessageTo', 'Type your message to')} ${activeCounterpart.name}...`}
                     className="flex-1 px-4 py-3 bg-stone-100 border border-stone-200 rounded-2xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 transition"
                   />
 
@@ -1526,7 +1526,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                     type="submit"
                     className="px-4 py-3 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 disabled:hover:bg-emerald-700 text-white rounded-2xl shadow-md transition cursor-pointer shrink-0 flex items-center justify-center gap-1.5 text-xs font-bold font-display"
                   >
-                    <span>Send</span>
+                    <span>{t('common.send', 'Send')}</span>
                     <Send className="w-4 h-4" />
                   </button>
                 </form>
@@ -1546,10 +1546,10 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   </div>
                   <div>
                     <h3 className="font-bold text-stone-900 text-lg font-display">
-                      Compose & Send New Message
+                      {t('chat.composeSendTitle', 'Compose & Send New Message')}
                     </h3>
                     <p className="text-xs text-stone-500">
-                      Send a direct inquiry to equipment owners, farmers, or official platform support.
+                      {t('chat.composeSendDesc', 'Send a direct inquiry to equipment owners, farmers, or official platform support.')}
                     </p>
                   </div>
                 </div>
@@ -1560,7 +1560,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   {/* Select Recipient */}
                   <div>
                     <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                      Select Recipient *
+                      {t('chat.selectRecipient', 'Select Recipient *')}
                     </label>
                     <select
                       value={composeRecipientId}
@@ -1570,7 +1570,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                     >
                       {availableUsers.map(u => (
                         <option key={u.id} value={u.id}>
-                          {u.name} — {u.role === 'ADMIN' ? 'Agri Extension Desk (Officer)' : u.role === 'OWNER' ? `Fleet Owner (${u.district})` : `Farmer (${u.district})`}
+                          {u.name} — {u.role === 'ADMIN' ? t('chat.agriExtensionOfficerOption', 'Agri Extension Desk (Officer)') : u.role === 'OWNER' ? `${t('chat.fleetOwner', 'Fleet Owner')} (${u.district})` : `${t('chat.farmer', 'Farmer')} (${u.district})`}
                         </option>
                       ))}
                     </select>
@@ -1579,14 +1579,14 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   {/* Optional: Reference Machinery */}
                   <div>
                     <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                      Referenced Machinery (Optional)
+                      {t('chat.referencedMachinery', 'Referenced Machinery (Optional)')}
                     </label>
                     <select
                       value={composeEquipmentId}
                       onChange={e => setComposeEquipmentId(e.target.value)}
                       className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs sm:text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                     >
-                      <option value="">-- None / General Inquiries --</option>
+                      <option value="">{t('chat.noneGeneralInquiries', '-- None / General Inquiries --')}</option>
                       {availableEquipment.map(eq => (
                         <option key={eq.id} value={eq.id}>
                           {eq.name} (₹{eq.pricePerDay}/day - {eq.district})
@@ -1598,13 +1598,13 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   {/* Message Textarea */}
                   <div>
                     <label className="block text-xs font-bold text-stone-700 mb-1.5">
-                      Your Message / Farm Inquiry *
+                      {t('chat.yourMessageInquiry', 'Your Message / Farm Inquiry *')}
                     </label>
                     <textarea
                       rows={4}
                       value={composeText}
                       onChange={e => setComposeText(e.target.value)}
-                      placeholder="Namaste, I would like to inquire about machinery availability, driver allowance, and farm delivery for the upcoming cropping cycle..."
+                      placeholder={t('chat.composePlaceholder', 'Namaste, I would like to inquire about machinery availability, driver allowance, and farm delivery for the upcoming cropping cycle...')}
                       required
                       className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 leading-relaxed"
                     />
@@ -1613,7 +1613,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   {/* Quick Preset Templates */}
                   <div>
                     <span className="text-[11px] font-bold text-stone-500 block mb-1.5">
-                      Quick Suggestions:
+                      {t('chat.quickSuggestions', 'Quick Suggestions:')}
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                       <button
@@ -1621,21 +1621,21 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                         onClick={() => setComposeText('Namaste ji, is this machinery available for 3 days of ploughing next week?')}
                         className="px-2.5 py-1 bg-stone-100 hover:bg-emerald-50 hover:text-emerald-900 text-stone-700 rounded-lg text-[11px] font-medium border border-stone-200 transition text-left cursor-pointer"
                       >
-                        Availability next week?
+                        {t('chat.availabilityNextWeek', 'Availability next week?')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setComposeText('Does the daily rental include a skilled tractor driver and attachments?')}
                         className="px-2.5 py-1 bg-stone-100 hover:bg-emerald-50 hover:text-emerald-900 text-stone-700 rounded-lg text-[11px] font-medium border border-stone-200 transition text-left cursor-pointer"
                       >
-                        Driver & attachments?
+                        {t('chat.driverAttachments', 'Driver & attachments?')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setComposeText('Can you deliver the machine directly to our field gate in the village?')}
                         className="px-2.5 py-1 bg-stone-100 hover:bg-emerald-50 hover:text-emerald-900 text-stone-700 rounded-lg text-[11px] font-medium border border-stone-200 transition text-left cursor-pointer"
                       >
-                        Field delivery?
+                        {t('chat.fieldDelivery', 'Field delivery?')}
                       </button>
                     </div>
                   </div>
@@ -1648,7 +1648,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                       className="w-full py-3.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white font-bold rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
                     >
                       <Send className="w-4 h-4" />
-                      <span>{isSendingCompose ? 'Sending Message...' : 'Send Message Now'}</span>
+                      <span>{isSendingCompose ? t('chat.sendingMessage', 'Sending Message...') : t('chat.sendMessageNow', 'Send Message Now')}</span>
                     </button>
                   </div>
                 </form>
@@ -1669,10 +1669,10 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-stone-900 text-base font-display">
-                  Start Direct Conversation
+                  {t('chat.startDirectConversation', 'Start Direct Conversation')}
                 </h3>
                 <p className="text-xs text-stone-500">
-                  Select a farmer, equipment owner, or support officer
+                  {t('chat.selectRecipientHint', 'Select a farmer, equipment owner, or support officer')}
                 </p>
               </div>
               <button
@@ -1732,7 +1732,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-red-600 font-bold">
                 <AlertTriangle className="w-5 h-5" />
-                <h3 className="text-base text-stone-900">Report Message</h3>
+                <h3 className="text-base text-stone-900">{t('chat.reportMessage', 'Report Message')}</h3>
               </div>
               <button
                 onClick={() => setReportModalMessage(null)}
@@ -1749,37 +1749,37 @@ export const ChatPage: React.FC<ChatPageProps> = ({
             ) : (
               <form onSubmit={handleSubmitReport} className="space-y-4">
                 <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200 text-xs text-stone-700">
-                  <span className="font-bold block text-stone-900 mb-1">Message content:</span>
+                  <span className="font-bold block text-stone-900 mb-1">{t('chat.messageContent', 'Message content:')}</span>
                   <p className="italic">{reportModalMessage.content}</p>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-stone-700 mb-1">
-                    Reason for report *
+                    {t('chat.reportReason', 'Reason for report *')}
                   </label>
                   <select
                     value={reportReason}
                     onChange={e => setReportReason(e.target.value)}
                     className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-600"
                   >
-                    <option value="SPAM">Spam or unwanted advertising</option>
-                    <option value="HARASSMENT">Harassment or abusive language</option>
-                    <option value="FRAUD">Fraud or suspicious identity</option>
-                    <option value="SUSPICIOUS_PAYMENT">Suspicious payment / offline bypass</option>
-                    <option value="INAPPROPRIATE">Inappropriate agricultural content</option>
-                    <option value="OTHER">Other grievance</option>
+                    <option value="SPAM">{t('chat.reportSpam', 'Spam or unwanted advertising')}</option>
+                    <option value="HARASSMENT">{t('chat.reportHarassment', 'Harassment or abusive language')}</option>
+                    <option value="FRAUD">{t('chat.reportFraud', 'Fraud or suspicious identity')}</option>
+                    <option value="SUSPICIOUS_PAYMENT">{t('chat.reportSuspiciousPayment', 'Suspicious payment / offline bypass')}</option>
+                    <option value="INAPPROPRIATE">{t('chat.reportInappropriate', 'Inappropriate agricultural content')}</option>
+                    <option value="OTHER">{t('chat.reportOther', 'Other grievance')}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-stone-700 mb-1">
-                    Additional notes for moderation desk (Optional)
+                    {t('chat.additionalNotes', 'Additional notes for moderation desk (Optional)')}
                   </label>
                   <textarea
                     rows={3}
                     value={reportDescription}
                     onChange={e => setReportDescription(e.target.value)}
-                    placeholder="Provide additional context or details..."
+                    placeholder={t('chat.additionalContext', 'Provide additional context or details...')}
                     className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-600"
                   />
                 </div>
@@ -1790,14 +1790,14 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                     onClick={() => setReportModalMessage(null)}
                     className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-xl"
                   >
-                    Cancel
+                    {t('common.cancel', 'Cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmittingReport}
                     className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs"
                   >
-                    {isSubmittingReport ? 'Submitting...' : 'Submit Report'}
+                    {isSubmittingReport ? t('chat.submitting', 'Submitting...') : t('chat.submitReport', 'Submit Report')}
                   </button>
                 </div>
               </form>

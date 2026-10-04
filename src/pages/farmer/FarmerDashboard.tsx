@@ -189,7 +189,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
             title="Chat with Krishi Mitra Support & Escrow Arbitrator"
           >
             <MessageSquare className="w-4 h-4 text-amber-400" />
-            <span>Agri Support Desk</span>
+            <span>{t('chat.adminSupport', 'Agri Support Desk')}</span>
           </button>
           <button
             onClick={() => onNavigate('/equipment')}
@@ -218,7 +218,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           <div className="text-2xl font-black text-stone-900 font-display">
             {bookings.length}
           </div>
-          <span className="text-[11px] text-stone-400">All season requests</span>
+          <span className="text-[11px] text-stone-400">{t('dash.allSeasonRequests', 'All season requests')}</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
@@ -229,7 +229,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           <div className="text-2xl font-black text-blue-700 font-display">
             {activeRentalsCount}
           </div>
-          <span className="text-[11px] text-stone-400">Currently operating</span>
+          <span className="text-[11px] text-stone-400">{t('dash.currentlyOperating', 'Currently operating')}</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
@@ -241,7 +241,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
             {pendingPaymentCount}
           </div>
           <span className="text-[11px] text-amber-700 font-medium">
-            {pendingPaymentCount > 0 ? 'Action required' : 'All clear'}
+            {pendingPaymentCount > 0 ? t('dash.actionRequired', 'Action required') : t('dash.allClear', 'All clear')}
           </span>
         </div>
 
@@ -253,7 +253,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           <div className="text-2xl font-black text-stone-900 font-display">
             ₹{totalSpent.toLocaleString('en-IN')}
           </div>
-          <span className="text-[11px] text-emerald-700 font-semibold">100% Escrow Protected</span>
+          <span className="text-[11px] text-emerald-700 font-semibold">{t('trust.escrowProtected', '100% Escrow Protected')}</span>
         </div>
       </div>
 
@@ -289,9 +289,9 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           ) : bookings.length === 0 ? (
             <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center space-y-3">
               <Tractor className="w-10 h-10 text-stone-400 mx-auto" />
-              <h3 className="font-bold text-stone-900 text-sm">No rental bookings yet</h3>
+              <h3 className="font-bold text-stone-900 text-sm">{t('dash.noBookingsTitle', 'No rental bookings yet')}</h3>
               <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                Explore our verified equipment catalog to book high-efficiency machinery for your farm.
+                {t('dash.noBookingsDesc', 'Explore our verified equipment catalog to book high-efficiency machinery for your farm.')}
               </p>
               <button
                 onClick={() => onNavigate('/equipment')}
@@ -325,7 +325,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                             ? 'bg-amber-100 text-amber-900'
                             : 'bg-stone-100 text-stone-700'
                         }`}>
-                          {(b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED' ? 'Rental Completed' : (!isValidBookingDate(b.startDate) || !isValidBookingDate(b.endDate)) ? 'Rental Dates Unavailable' : b.status === 'ACTIVE' ? 'Rental In Progress' : translateStatus(b.status)}
+                          {(b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED' ? t('status.completed', 'Rental Completed') : (!isValidBookingDate(b.startDate) || !isValidBookingDate(b.endDate)) ? t('status.datesUnavailable', 'Rental Dates Unavailable') : b.status === 'ACTIVE' ? t('status.active', 'Rental In Progress') : translateStatus(b.status)}
                         </span>
                       </div>
                       <h4
@@ -335,9 +335,9 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                         {b.equipmentName}
                       </h4>
                       <p className="text-xs text-stone-500 flex items-center gap-2">
-                        <span>{isValidBookingDate(b.startDate) && isValidBookingDate(b.endDate) ? `${b.startDate} to ${b.endDate} (${b.durationDays} ${t('common.perDay', 'days')})` : 'Rental dates unavailable'}</span>
+                        <span>{isValidBookingDate(b.startDate) && isValidBookingDate(b.endDate) ? `${b.startDate} to ${b.endDate} (${b.durationDays} ${t('common.perDay', 'days')})` : t('status.datesUnavailable', 'Rental dates unavailable')}</span>
                         <span>•</span>
-                        <span>Owner: {b.ownerName}</span>
+                        <span>{t('common.owner', 'Owner')}: {b.ownerName}</span>
                       </p>
                     </div>
                   </div>
@@ -363,7 +363,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                           onClick={() => handlePayBooking(b.id)}
                           className="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold"
                         >
-                          Pay ₹{b.platformFee + b.bookingAmount}
+                          {t('dash.pay', 'Pay')} ₹{b.platformFee + b.bookingAmount}
                         </button>
                       )}
 
@@ -373,27 +373,27 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                             onClick={() => handlePayRemainingOnline(b.id)}
                             className="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold"
                           >
-                            Pay Remaining Online ₹{Number(b.remainingRentalAmount ?? 0).toLocaleString('en-IN')}
+                            {t('dash.payRemainingOnline', 'Pay Remaining Online')} ₹{Number(b.remainingRentalAmount ?? 0).toLocaleString('en-IN')}
                           </button>
                           <button
                             type="button"
                             onClick={() => handleRequestRemainingCash(b.id)}
                             className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold"
                           >
-                            Pay Remaining by Cash
+                            {t('dash.payRemainingCash', 'Pay Remaining by Cash')}
                           </button>
                         </>
                       )}
 
                       {b.rentalCompletedAt && Number(b.remainingRentalAmount ?? 0) > 0 && b.remainingPaymentStatus !== 'PAID' && b.remainingPaymentMethod === 'CASH' && (
                         <span className="px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold">
-                          Cash Payment Awaiting Owner Confirmation
+                          {t('dash.cashAwaitingOwner', 'Cash Payment Awaiting Owner Confirmation')}
                         </span>
                       )}
 
                       {b.rentalCompletedAt && (Number(b.remainingRentalAmount ?? 0) <= 0 || b.remainingPaymentStatus === 'PAID') && (
                         <span className="px-3 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold">
-                          Payment Completed
+                          {t('dash.paymentCompleted', 'Payment Completed')}
                         </span>
                       )}
 
@@ -433,19 +433,19 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
         <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-xs">
           <div className="p-4 border-b border-stone-200 flex items-center justify-between">
             <h3 className="font-bold text-stone-900 text-xs sm:text-sm">{t('nav.paymentReceipts', 'Payment Receipts & Invoices')}</h3>
-            <span className="text-xs text-stone-500 font-mono">Razorpay advance + platform fee receipts</span>
+            <span className="text-xs text-stone-500 font-mono">{t('dash.receiptsNote', 'Razorpay advance + platform fee receipts')}</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-stone-50 border-b border-stone-200 text-stone-600 font-bold uppercase tracking-wider text-[10px]">
                 <tr>
-                  <th className="p-3.5">Invoice #</th>
-                  <th className="p-3.5">Date</th>
-                  <th className="p-3.5">Equipment</th>
-                  <th className="p-3.5">Method</th>
-                  <th className="p-3.5">Amount (₹)</th>
-                  <th className="p-3.5">Status</th>
+                  <th className="p-3.5">{t('table.invoice', 'Invoice #')}</th>
+                  <th className="p-3.5">{t('table.date', 'Date')}</th>
+                  <th className="p-3.5">{t('table.equipment', 'Equipment')}</th>
+                  <th className="p-3.5">{t('table.method', 'Method')}</th>
+                  <th className="p-3.5">{t('table.amount', 'Amount (₹)')}</th>
+                  <th className="p-3.5">{t('table.status', 'Status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">

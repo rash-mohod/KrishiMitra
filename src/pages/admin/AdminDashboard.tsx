@@ -2,6 +2,7 @@ import { Avatar } from '../../components/common/Avatar';
 import React, { useEffect, useState } from 'react';
 import { Booking, Category, Dispute, Equipment, PaymentTransaction, User } from '../../types';
 import { adminApi, authApi, bookingApi, equipmentApi, paymentApi } from '../../services/api';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   AlertCircle,
   AlertTriangle,
@@ -41,6 +42,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onViewEquipment
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const { t } = useLanguage();
   const [stats, setStats] = useState<any>(null);
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
   const [usersList, setUsersList] = useState<User[]>([]);
@@ -51,7 +53,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // Moderation reject dialog
   const [rejectDialogItem, setRejectDialogItem] = useState<Equipment | null>(null);
-  const [rejectionReason, setRejectionReason] = useState('Incomplete machinery specifications or missing RC/tax papers.');
+  const [rejectionReason, setRejectionReason] = useState(() => t('admin.defaultRejectionReason', 'Incomplete machinery specifications or missing RC/tax papers.'));
   const [actionToast, setActionToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -89,10 +91,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleApproveEquipment = async (id: string) => {
     try {
       await adminApi.approveEquipment(id);
-      showToast('Machinery listing approved and published to the live marketplace!', 'success');
+      showToast(t('admin.approveSuccess', 'Machinery listing approved and published to the live marketplace!'), 'success');
       loadAdminData();
     } catch (err: any) {
-      showToast(err.message || 'Approval failed', 'error');
+      showToast(err.message || t('admin.approvalFailed', 'Approval failed'), 'error');
     }
   };
 
@@ -100,21 +102,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (!rejectDialogItem) return;
     try {
       await adminApi.rejectEquipment(rejectDialogItem.id, rejectionReason);
-      showToast('Listing rejected and feedback sent to owner.', 'success');
+      showToast(t('admin.rejectSuccess', 'Listing rejected and feedback sent to owner.'), 'success');
       setRejectDialogItem(null);
       loadAdminData();
     } catch (err: any) {
-      showToast(err.message || 'Rejection failed', 'error');
+      showToast(err.message || t('admin.rejectionFailed', 'Rejection failed'), 'error');
     }
   };
 
   const handleToggleUserStatus = async (userId: string, currentActive: boolean) => {
     try {
       await adminApi.setUserStatus(userId, !currentActive);
-      showToast(`User status updated to ${!currentActive ? 'Active' : 'Suspended'}.`, 'success');
+      showToast(`${t('admin.userStatusUpdated', 'User status updated to')} ${!currentActive ? t('admin.active', 'Active') : t('admin.suspended', 'Suspended')}.`, 'success');
       loadAdminData();
     } catch (err: any) {
-      showToast(err.message || 'Status update failed', 'error');
+      showToast(err.message || t('admin.statusUpdateFailed', 'Status update failed'), 'error');
     }
   };
 
@@ -146,14 +148,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-display font-bold text-xl sm:text-2xl text-white">
-                Agricultural Extension Moderation Admin
+                {t('admin.title', 'Agricultural Extension Moderation Admin')}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-950 text-blue-300 border border-blue-700">
-                STATE EXTENSION
+                {t('admin.stateExtension', 'STATE EXTENSION')}
               </span>
             </div>
             <p className="text-xs text-stone-400 mt-1">
-              Supervising farm mechanization, machinery verification, and payment escrow arbitrations.
+              {t('admin.subtitle', 'Supervising farm mechanization, machinery verification, and payment escrow arbitrations.')}
             </p>
           </div>
         </div>
@@ -164,7 +166,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
           >
             <MessageSquare className="w-4 h-4 text-amber-400" />
-            <span>Support Chat Desk</span>
+            <span>{t('admin.supportChat', 'Support Chat Desk')}</span>
           </button>
 
           <button
@@ -172,7 +174,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             className="px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
-            <span>Refresh Metrics</span>
+            <span>{t('admin.refreshMetrics', 'Refresh Metrics')}</span>
           </button>
         </div>
       </div>
@@ -181,57 +183,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
           <span className="text-xs font-bold text-stone-500 flex items-center justify-between">
-            <span>Total GMV</span>
+            <span>{t('admin.totalGmv', 'Total GMV')}</span>
             <TrendingUp className="w-4 h-4 text-emerald-700" />
           </span>
           <div className="text-xl font-black text-stone-900 font-display">
             ₹{(stats?.totalGMV || 0).toLocaleString('en-IN')}
           </div>
-          <span className="text-[11px] text-stone-400">Gross platform rentals</span>
+          <span className="text-[11px] text-stone-400">{t('admin.grossPlatformRentals', 'Gross platform rentals')}</span>
         </div>
 
         <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-200 shadow-xs space-y-1">
           <span className="text-xs font-bold text-emerald-800 flex items-center justify-between">
-            <span>Platform Revenue</span>
+            <span>{t('admin.platformRevenue', 'Platform Revenue')}</span>
             <Zap className="w-4 h-4 text-emerald-700" />
           </span>
           <div className="text-xl font-black text-emerald-900 font-display">
             ₹{(stats?.platformRevenue || 0).toLocaleString('en-IN')}
           </div>
-          <span className="text-[11px] text-emerald-700 font-medium">Slab-based platform fee</span>
+          <span className="text-[11px] text-emerald-700 font-medium">{t('admin.slabPlatformFee', 'Slab-based platform fee')}</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
           <span className="text-xs font-bold text-stone-500 flex items-center justify-between">
-            <span>Total Farmers</span>
+            <span>{t('admin.totalFarmers', 'Total Farmers')}</span>
             <Users className="w-4 h-4 text-amber-600" />
           </span>
           <div className="text-xl font-black text-stone-900 font-display">
             {stats?.farmersCount || 0}
           </div>
-          <span className="text-[11px] text-stone-400">{stats?.ownersCount || 0} machinery owners</span>
+          <span className="text-[11px] text-stone-400">{stats?.ownersCount || 0} {t('admin.machineryOwners', 'machinery owners')}</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
           <span className="text-xs font-bold text-stone-500 flex items-center justify-between">
-            <span>Machinery Fleet</span>
+            <span>{t('admin.machineryFleet', 'Machinery Fleet')}</span>
             <Tractor className="w-4 h-4 text-emerald-700" />
           </span>
           <div className="text-xl font-black text-stone-900 font-display">
             {stats?.totalEquipment || 0}
           </div>
-          <span className="text-[11px] text-stone-400">Total registered assets</span>
+          <span className="text-[11px] text-stone-400">{t('admin.totalRegisteredAssets', 'Total registered assets')}</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-1">
           <span className="text-xs font-bold text-amber-800 flex items-center justify-between">
-            <span>Pending Review</span>
+            <span>{t('admin.pendingReview', 'Pending Review')}</span>
             <Clock className="w-4 h-4 text-amber-600" />
           </span>
           <div className="text-xl font-black text-amber-700 font-display">
             {pendingEquipment.length}
           </div>
-          <span className="text-[11px] text-amber-700 font-medium">Requires moderation</span>
+          <span className="text-[11px] text-amber-700 font-medium">{t('admin.requiresModeration', 'Requires moderation')}</span>
         </div>
       </div>
 
@@ -245,7 +247,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
-          <span>Machinery Moderation Queue</span>
+          <span>{t('admin.moderationQueue', 'Machinery Moderation Queue')}</span>
           {pendingEquipment.length > 0 && (
             <span className="px-1.5 py-0.2 bg-amber-500 text-stone-900 rounded-full text-[10px] font-extrabold">
               {pendingEquipment.length}
@@ -261,7 +263,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
-          User Accounts & Access ({usersList.length})
+          {t('admin.userAccountsAccess', 'User Accounts & Access')} ({usersList.length})
         </button>
 
         <button
@@ -272,7 +274,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
-          All Rental Bookings ({bookingsList.length})
+          {t('admin.allRentalBookings', 'All Rental Bookings')} ({bookingsList.length})
         </button>
 
         <button
@@ -283,7 +285,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
-          Payment Escrow Logs ({transactionsList.length})
+          {t('admin.paymentEscrowLogs', 'Payment Escrow Logs')} ({transactionsList.length})
         </button>
       </div>
 
@@ -293,10 +295,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="flex justify-between items-center">
             <div>
               <h3 className="font-bold text-stone-900 text-sm font-display">
-                Pending Equipment Submissions ({pendingEquipment.length})
+                {t('admin.pendingEquipmentSubmissions', 'Pending Equipment Submissions')} ({pendingEquipment.length})
               </h3>
               <p className="text-xs text-stone-500">
-                Inspect specifications, manufacturing year, and pricing before publishing to public farmers.
+                {t('admin.inspectBeforePublishing', 'Inspect specifications, manufacturing year, and pricing before publishing to public farmers.')}
               </p>
             </div>
           </div>
@@ -304,8 +306,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {pendingEquipment.length === 0 ? (
             <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center text-xs text-stone-500 space-y-2">
               <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-              <p className="font-bold text-stone-800 text-sm">Moderation Queue is Clean!</p>
-              <p>All machinery submissions have been inspected and resolved.</p>
+              <p className="font-bold text-stone-800 text-sm">{t('admin.queueClean', 'Moderation Queue is Clean!')}</p>
+              <p>{t('admin.queueResolved', 'All machinery submissions have been inspected and resolved.')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -329,7 +331,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         {eq.name}
                       </h4>
                       <p className="text-xs text-stone-600">
-                        Owner: <strong>{eq.ownerName}</strong> ({eq.ownerPhone})
+                        {t('admin.ownerLabel', 'Owner')}: <strong>{eq.ownerName}</strong> ({eq.ownerPhone})
                       </p>
                       <p className="text-xs text-stone-500">
                         Location: {eq.location}, {eq.district}
@@ -340,20 +342,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {/* Specifications Snapshot */}
                   <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 text-xs text-stone-700 grid grid-cols-2 gap-2">
                     <div>
-                      <span className="text-stone-400 text-[10px] block">Daily Rental</span>
-                      <span className="font-bold text-stone-900">₹{eq.pricePerDay.toLocaleString('en-IN')}/day</span>
+                      <span className="text-stone-400 text-[10px] block">{t('admin.dailyRental', 'Daily Rental')}</span>
+                      <span className="font-bold text-stone-900">₹{eq.pricePerDay.toLocaleString('en-IN')}/{t('common.perDay', 'day')}</span>
                     </div>
                     <div>
-                      <span className="text-stone-400 text-[10px] block">Condition</span>
+                      <span className="text-stone-400 text-[10px] block">{t('admin.condition', 'Condition')}</span>
                       <span className="font-bold text-stone-900">{eq.condition}</span>
                     </div>
                     <div>
-                      <span className="text-stone-400 text-[10px] block">Mfg Year</span>
+                      <span className="text-stone-400 text-[10px] block">{t('admin.mfgYear', 'Mfg Year')}</span>
                       <span className="font-bold text-stone-900">{eq.manufacturingYear}</span>
                     </div>
                     <div>
-                      <span className="text-stone-400 text-[10px] block">Driver Available</span>
-                      <span className="font-bold text-stone-900">{eq.operatorAvailable ? 'Yes' : 'No'}</span>
+                      <span className="text-stone-400 text-[10px] block">{t('admin.driverAvailable', 'Driver Available')}</span>
+                      <span className="font-bold text-stone-900">{eq.operatorAvailable ? t('common.yes', 'Yes') : t('common.no', 'No')}</span>
                     </div>
                   </div>
 
@@ -367,7 +369,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5"
                     >
                       <Check className="w-4 h-4" />
-                      <span>Approve & Publish</span>
+                      <span>{t('admin.approvePublish', 'Approve & Publish')}</span>
                     </button>
                     <button
                       onClick={() => setRejectDialogItem(eq)}
@@ -387,7 +389,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {activeTab === 'users' && (
         <div className="bg-white rounded-2xl border border-stone-200 shadow-xs overflow-hidden">
           <div className="p-4 border-b border-stone-200 font-bold text-xs text-stone-800 uppercase tracking-wider">
-            Platform Users Management
+            {t('admin.platformUsersManagement', 'Platform Users Management')}
           </div>
           <div className="divide-y divide-stone-100 text-xs">
             {usersList.map(u => (
@@ -410,7 +412,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </span>
                       {!u.isActive && (
                         <span className="text-[10px] font-bold bg-red-100 text-red-800 px-2 py-0.2 rounded">
-                          SUSPENDED
+                          {t('admin.suspended', 'SUSPENDED')}
                         </span>
                       )}
                     </div>
@@ -432,12 +434,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {u.isActive ? (
                       <>
                         <Lock className="w-3.5 h-3.5" />
-                        <span>Suspend Access</span>
+                        <span>{t('admin.suspendAccess', 'Suspend Access')}</span>
                       </>
                     ) : (
                       <>
                         <Unlock className="w-3.5 h-3.5" />
-                        <span>Reactivate</span>
+                        <span>{t('admin.reactivate', 'Reactivate')}</span>
                       </>
                     )}
                   </button>
@@ -452,7 +454,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {activeTab === 'bookings' && (
         <div className="bg-white rounded-2xl border border-stone-200 shadow-xs overflow-hidden">
           <div className="p-4 border-b border-stone-200 font-bold text-xs text-stone-800 uppercase tracking-wider">
-            All Platform Transactions & Rentals
+            {t('admin.allPlatformTransactions', 'All Platform Transactions & Rentals')}
           </div>
           <div className="divide-y divide-stone-100 text-xs">
             {bookingsList.map(b => (
@@ -473,12 +475,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           : 'bg-yellow-100 text-yellow-900'
                       }`}
                     >
-                      {b.status}
+                      {translateStatus(b.status)}
                     </span>
                   </div>
                   <p className="font-medium text-stone-800">{b.equipmentName}</p>
                   <p className="text-stone-500 text-[11px]">
-                    Farmer: {b.farmerName} ➔ Owner: {b.ownerName} ({b.startDate} to {b.endDate})
+                    {t('admin.farmerLabel', 'Farmer')}: {b.farmerName} ➔ {t('admin.ownerLabel', 'Owner')}: {b.ownerName} ({b.startDate} {t('common.to', 'to')} {b.endDate})
                   </p>
                 </div>
 
@@ -487,7 +489,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     ₹{b.totalAmount.toLocaleString('en-IN')}
                   </span>
                   <span className="text-[10px] text-emerald-700 block font-semibold">
-                    Fee: ₹{b.platformFee}
+                    {t('admin.feeLabel', 'Fee')}: ₹{b.platformFee}
                   </span>
                 </div>
               </div>
@@ -500,28 +502,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {activeTab === 'payments' && (
         <div className="bg-white rounded-2xl border border-stone-200 shadow-xs overflow-hidden">
           <div className="p-4 border-b border-stone-200 font-bold text-xs text-stone-800 uppercase tracking-wider">
-            Payment integration not enabled in this version
+            {t('admin.paymentNotEnabled', 'Payment integration not enabled in this version')}
           </div>
           <div className="divide-y divide-stone-100 text-xs">
-            {transactionsList.map(t => (
-              <div key={t.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-stone-50">
+            {transactionsList.map(transaction => (
+              <div key={transaction.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-stone-50">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-stone-900">{t.bookingCode}</span>
+                    <span className="font-bold text-stone-900">{transaction.bookingCode}</span>
                     <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                      VERIFIED
+                      {t('admin.verified', 'VERIFIED')}
                     </span>
                   </div>
                   <p className="text-stone-500 text-[11px]">
-                    Order: {t.razorpayOrderId} • Payment: {t.razorpayPaymentId}
+                    {t('admin.orderLabel', 'Order')}: {transaction.razorpayOrderId} • {t('admin.paymentLabel', 'Payment')}: {transaction.razorpayPaymentId}
                   </p>
                 </div>
                 <div className="text-right">
                   <span className="font-bold text-stone-900 text-sm">
-                    ₹{t.amount.toLocaleString('en-IN')}
+                    ₹{transaction.amount.toLocaleString('en-IN')}
                   </span>
                   <span className="text-[10px] text-stone-500 block">
-                    Owner Net: ₹{t.ownerNetEarnings} • KrishiMitra Platform Fee: ₹{t.platformFee}
+                    {t('admin.ownerNetLabel', 'Owner Net')}: ₹{transaction.ownerNetEarnings} • {t('admin.platformFeeLabel', 'KrishiMitra Platform Fee')}: ₹{transaction.platformFee}
                   </span>
                 </div>
               </div>
@@ -534,13 +536,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {rejectDialogItem && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="font-bold text-stone-900 text-base">Reject Machinery Listing</h3>
+            <h3 className="font-bold text-stone-900 text-base">{t('admin.rejectMachineryListing', 'Reject Machinery Listing')}</h3>
             <p className="text-xs text-stone-500">
-              Provide feedback for <strong>{rejectDialogItem.name}</strong> so the owner can correct documentation.
+              {t('admin.feedbackFor', 'Provide feedback for ')}<strong>{rejectDialogItem.name}</strong> {t('admin.feedbackOwnerDocumentation', ' so the owner can correct documentation.')}
             </p>
             <div>
               <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Rejection Reason
+                {t('admin.rejectionReason', 'Rejection Reason')}
               </label>
               <textarea
                 rows={3}
@@ -555,13 +557,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 onClick={() => setRejectDialogItem(null)}
                 className="px-4 py-2 text-xs text-stone-600 hover:bg-stone-100 rounded-xl font-semibold"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleRejectEquipment}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl"
               >
-                Confirm Rejection
+                {t('admin.confirmRejection', 'Confirm Rejection')}
               </button>
             </div>
           </div>

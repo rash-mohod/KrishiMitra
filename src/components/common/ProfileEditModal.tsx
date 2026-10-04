@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, Mail, MapPin, Phone, Save, UserRound, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { authApi } from '../../services/api';
 import { ProfilePhotoPicker } from './ProfilePhotoPicker';
 import { INDIA_STATES_AND_UTS, getDistrictsForState } from '../../data/indiaLocations';
@@ -18,6 +19,7 @@ const isLegacyDemoAvatar = (value?: string) => {
 
 export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ open, onClose }) => {
   const { user, updateProfile } = useAuth();
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [state, setState] = useState('');
@@ -72,15 +74,15 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ open, onClos
     setSuccess('');
 
     if (!/^\d{10}$/.test(phone.trim())) {
-      setError('Phone number must contain exactly 10 digits.');
+      setError(t('profile.phoneDigitsError', 'Phone number must contain exactly 10 digits.'));
       return;
     }
     if (!name.trim() || name.trim().length < 2) {
-      setError('Full name must be at least 2 characters.');
+      setError(t('profile.fullNameError', 'Full name must be at least 2 characters.'));
       return;
     }
     if (!state || !district) {
-      setError('Please select your state and district.');
+      setError(t('profile.locationError', 'Please select your state and district.'));
       return;
     }
 
@@ -102,10 +104,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ open, onClos
         avatarUrl: avatarUrl ?? ''
       });
 
-      setSuccess('Profile updated successfully.');
+      setSuccess(t('profile.updatedSuccess', 'Profile updated successfully.'));
       window.setTimeout(() => onClose(), 700);
     } catch (err: any) {
-      setError(err?.message || 'Could not save profile changes.');
+      setError(err?.message || t('profile.saveError', 'Could not save profile changes.'));
     } finally {
       setSaving(false);
     }
@@ -129,10 +131,10 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ open, onClos
       >
         <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-stone-200 px-5 sm:px-7 py-4 flex items-center justify-between">
           <div>
-            <h2 className="font-display font-extrabold text-xl text-stone-900">Edit Profile</h2>
-            <p className="text-xs text-stone-500">Update your personal information and profile picture.</p>
+            <h2 className="font-display font-extrabold text-xl text-stone-900">{t('profile.editTitle', 'Edit Profile')}</h2>
+            <p className="text-xs text-stone-500">{t('profile.editSubtitle', 'Update your personal information and profile picture.')}</p>
           </div>
-          <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-stone-100 cursor-pointer" aria-label="Close">
+          <button type="button" onClick={onClose} className="p-2 rounded-xl hover:bg-stone-100 cursor-pointer" aria-label={t('common.close', 'Close')}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -141,70 +143,70 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({ open, onClos
           {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">{error}</div>}
           {success && <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2"><CheckCircle2 className="w-4 h-4" />{success}</div>}
 
-          <ProfilePhotoPicker value={photo} onChange={setPhoto} label="Profile Picture" />
+          <ProfilePhotoPicker value={photo} onChange={setPhoto} label={t('profile.profilePicture', 'Profile Picture')} />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1.5">Full Name *</label>
+              <label className="block text-xs font-bold text-stone-700 mb-1.5">{t('profile.fullName', 'Full Name')} *</label>
               <div className="relative">
                 <input value={name} onChange={e => setName(e.target.value)} required className="w-full pl-9 pr-3 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" />
                 <UserRound className="w-4 h-4 absolute left-3 top-3.5 text-stone-400" />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1.5">Mobile Number *</label>
+              <label className="block text-xs font-bold text-stone-700 mb-1.5">{t('profile.mobileNumber', 'Mobile Number')} *</label>
               <div className="relative">
                 <input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} maxLength={10} minLength={10} inputMode="numeric" required className="w-full pl-9 pr-3 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" />
                 <Phone className="w-4 h-4 absolute left-3 top-3.5 text-stone-400" />
               </div>
-              <p className="text-[10px] text-stone-400 mt-1">Exactly 10 digits.</p>
+              <p className="text-[10px] text-stone-400 mt-1">{t('profile.exactlyTenDigits', 'Exactly 10 digits.')}</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1.5">Email Address</label>
+            <label className="block text-xs font-bold text-stone-700 mb-1.5">{t('profile.emailAddress', 'Email Address')}</label>
             <div className="relative">
               <input value={user.email} readOnly className="w-full pl-9 pr-3 py-3 border border-stone-200 bg-stone-50 rounded-xl text-sm text-stone-500 cursor-not-allowed" />
               <Mail className="w-4 h-4 absolute left-3 top-3.5 text-stone-400" />
             </div>
-            <p className="text-[10px] text-stone-400 mt-1">Email is managed by your secure login account and cannot be changed here.</p>
+            <p className="text-[10px] text-stone-400 mt-1">{t('profile.emailManagedNotice', 'Email is managed by your secure login account and cannot be changed here.')}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1.5">State *</label>
+              <label className="block text-xs font-bold text-stone-700 mb-1.5">{t('profile.state', 'State')} *</label>
               <div className="relative">
                 <MapPin className="w-4 h-4 absolute left-3 top-3.5 text-stone-400 z-10" />
                 <select value={state} onChange={e => { setState(e.target.value); setDistrict(''); }} required className="w-full pl-9 pr-3 py-3 border border-stone-300 rounded-xl bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">
-                  <option value="">Select State</option>
+                  <option value="">{t('profile.selectState', 'Select State')}</option>
                   {INDIA_STATES_AND_UTS.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-stone-700 mb-1.5">District *</label>
+              <label className="block text-xs font-bold text-stone-700 mb-1.5">{t('profile.district', 'District')} *</label>
               <select value={district} onChange={e => setDistrict(e.target.value)} disabled={!state} required className="w-full px-3 py-3 border border-stone-300 rounded-xl bg-white disabled:bg-stone-100 disabled:text-stone-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm">
-                <option value="">{state ? 'Select District' : 'Select State First'}</option>
+                <option value="">{state ? t('profile.selectDistrict', 'Select District') : t('profile.selectStateFirst', 'Select State First')}</option>
                 {getDistrictsForState(state).map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1.5">Village / Tehsil</label>
-            <input value={village} onChange={e => setVillage(e.target.value)} placeholder="Enter village or tehsil" className="w-full px-3 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" />
+            <label className="block text-xs font-bold text-stone-700 mb-1.5">{t('profile.villageTehsil', 'Village / Tehsil')}</label>
+            <input value={village} onChange={e => setVillage(e.target.value)} placeholder={t('profile.villagePlaceholder', 'Enter village or tehsil')} className="w-full px-3 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1.5">Bio / Farm Summary</label>
-            <textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} placeholder="Tell us a little about your agricultural work..." className="w-full px-3 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" />
+            <label className="block text-xs font-bold text-stone-700 mb-1.5">{t('profile.bioFarmSummary', 'Bio / Farm Summary')}</label>
+            <textarea value={bio} onChange={e => setBio(e.target.value)} rows={4} placeholder={t('profile.bioPlaceholder', 'Tell us a little about your agricultural work...')} className="w-full px-3 py-3 border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 justify-end pt-2 border-t border-stone-100">
-            <button type="button" onClick={onClose} className="px-5 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold cursor-pointer">Cancel</button>
+            <button type="button" onClick={onClose} className="px-5 py-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold cursor-pointer">{t('common.cancel', 'Cancel')}</button>
             <button type="submit" disabled={saving} className="px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2">
               <Save className="w-4 h-4" />
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? t('common.saving', 'Saving...') : t('profile.saveChanges', 'Save Changes')}
             </button>
           </div>
         </form>

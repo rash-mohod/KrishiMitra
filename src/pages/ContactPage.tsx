@@ -103,7 +103,7 @@ export const ContactPage: React.FC = () => {
                     type="text"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="Suresh Patil"
+                    placeholder={t('common.namePlaceholder', 'Suresh Patil')}
                     required
                     className="w-full px-3 py-2.5 border border-stone-300 rounded-xl"
                   />
@@ -117,7 +117,7 @@ export const ContactPage: React.FC = () => {
                     type="tel"
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="+91 98220 00000"
+                    placeholder={t('common.phonePlaceholder', '+91 98220 00000')}
                     required
                     className="w-full px-3 py-2.5 border border-stone-300 rounded-xl"
                   />

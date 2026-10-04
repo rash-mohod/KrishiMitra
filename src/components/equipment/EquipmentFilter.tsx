@@ -98,7 +98,9 @@ export const EquipmentFilter: React.FC<EquipmentFilterProps> = ({
       <div>
         <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">{t('filter.categoryLabel', 'Machinery Category')}</label>
         <div className="flex flex-wrap gap-1.5">
-          <button onClick={() => onFilterChange({ ...filters, category: '' })} className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${!filters.category ? 'bg-emerald-700 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}`}>All Categories</button>
+          <button onClick={() => onFilterChange({ ...filters, category: '' })} className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${!filters.category ? 'bg-emerald-700 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}`}>
+            {t('filter.allCategories', 'All Categories')}
+          </button>
           {categories.map(cat => (
             <button key={cat.id} onClick={() => onFilterChange({ ...filters, category: cat.id })} className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${filters.category === cat.id || filters.category === cat.name ? 'bg-emerald-700 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'}`}>
               {translateCategory(cat.id)}
@@ -108,24 +110,24 @@ export const EquipmentFilter: React.FC<EquipmentFilterProps> = ({
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">State</label>
+        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">{t('common.state', 'State')}</label>
         <select value={filters.state || ''} onChange={e => onFilterChange({ ...filters, state: e.target.value, location: '', search: filters.search })} className="w-full px-3 py-2 text-xs border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-          <option value="">All States / UTs</option>
+          <option value="">{t('filter.allStates', 'All States / UTs')}</option>
           {INDIA_STATES_AND_UTS.map(state => <option key={state} value={state}>{state}</option>)}
         </select>
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">District</label>
+        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">{t('common.district', 'District')}</label>
         <select value={filters.district || ''} disabled={!filters.state} onChange={e => onFilterChange({ ...filters, district: e.target.value })} className="w-full px-3 py-2 text-xs border border-stone-300 rounded-xl bg-white disabled:bg-stone-100 disabled:text-stone-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-          <option value="">All Districts</option>
+          <option value="">{t('filter.allDistricts', 'All Districts')}</option>
           {districts.map(d => <option key={d} value={d}>{d}</option>)}
         </select>
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">Village / Tehsil</label>
-        <input value={filters.location || ''} onChange={e => onFilterChange({ ...filters, location: e.target.value })} placeholder="Enter village or tehsil" className="w-full px-3 py-2 text-xs border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+        <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">{t('filter.villageTehsil', 'Village / Tehsil')}</label>
+        <input value={filters.location || ''} onChange={e => onFilterChange({ ...filters, location: e.target.value })} placeholder={t('filter.villagePlaceholder', 'Enter village or tehsil')} className="w-full px-3 py-2 text-xs border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
       </div>
 
       <div>
@@ -137,7 +139,10 @@ export const EquipmentFilter: React.FC<EquipmentFilterProps> = ({
       </div>
 
       <div>
-        <div className="flex justify-between items-center mb-2"><label className="text-xs font-bold text-stone-700 uppercase tracking-wider">Max Daily Rate (₹)</label><span className="text-xs font-bold text-emerald-800">₹{(filters.maxPrice || 12000).toLocaleString('en-IN')}/day</span></div>
+        <div className="flex justify-between items-center mb-2">
+          <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">{t('filter.maxDailyRate', 'Max Daily Rate (₹)')}</label>
+          <span className="text-xs font-bold text-emerald-800">₹{(filters.maxPrice || 12000).toLocaleString('en-IN')}/{t('common.perDay', 'day')}</span>
+        </div>
         <input type="range" min="500" max="12000" step="250" value={filters.maxPrice || 12000} onChange={e => onFilterChange({ ...filters, minPrice: 0, maxPrice: Number(e.target.value) })} className="w-full accent-emerald-600 cursor-pointer" />
         <div className="flex justify-between text-[10px] text-stone-400 mt-1"><span>₹500</span><span>₹12,000+</span></div>
       </div>
@@ -147,7 +152,8 @@ export const EquipmentFilter: React.FC<EquipmentFilterProps> = ({
         <div className="grid grid-cols-3 gap-1.5">
           {(['ALL', 'EXCELLENT', 'GOOD'] as (EquipmentCondition | 'ALL')[]).map(cond => {
             const isSelected = (filters.condition || 'ALL') === cond;
-            return <button key={cond} onClick={() => onFilterChange({ ...filters, condition: cond })} className={`py-1.5 text-[11px] font-semibold rounded-lg border transition cursor-pointer ${isSelected ? 'bg-emerald-50 border-emerald-600 text-emerald-800' : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'}`}>{cond === 'ALL' ? 'All' : cond === 'EXCELLENT' ? 'Like New' : 'Good'}</button>;
+            const label = cond === 'ALL' ? t('common.all', 'All') : cond === 'EXCELLENT' ? t('marketplace.likeNew', 'Like New') : t('marketplace.good', 'Good');
+            return <button key={cond} onClick={() => onFilterChange({ ...filters, condition: cond })} className={`py-1.5 text-[11px] font-semibold rounded-lg border transition cursor-pointer ${isSelected ? 'bg-emerald-50 border-emerald-600 text-emerald-800' : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'}`}>{label}</button>;
           })}
         </div>
       </div>
@@ -155,7 +161,7 @@ export const EquipmentFilter: React.FC<EquipmentFilterProps> = ({
       <div className="pt-2 border-t border-stone-100">
         <label className="flex items-center gap-2.5 cursor-pointer select-none">
           <input type="checkbox" checked={!!filters.operatorRequired} onChange={e => onFilterChange({ ...filters, operatorRequired: e.target.checked })} className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-stone-300" />
-          <span className="text-xs font-semibold text-stone-700">Show Only with Driver / Operator Option</span>
+          <span className="text-xs font-semibold text-stone-700">{t('filter.operatorOnly', 'Show Only with Driver / Operator Option')}</span>
         </label>
       </div>
     </div>
