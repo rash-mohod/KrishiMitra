@@ -7,7 +7,7 @@ ALTER TABLE public.equipment DROP CONSTRAINT IF EXISTS equipment_booking_amount_
 ALTER TABLE public.equipment ADD CONSTRAINT equipment_booking_amount_non_negative CHECK (booking_amount >= 0);
 
 ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
-ALTER TABLE public.bookings ADD CONSTRAINT bookings_status_check CHECK (status IN ('PENDING','PAYMENT_PENDING','CONFIRMED','ACTIVE','COMPLETED','REJECTED','CANCELLED'));
+ALTER TABLE public.bookings ADD CONSTRAINT bookings_status_check CHECK (status IN ('PENDING','PAYMENT_PENDING','CONFIRMED','ACTIVE','COMPLETED','REJECTED','CANCELLED','EXPIRED','STOPPED'));
 
 CREATE TABLE IF NOT EXISTS public.payments (
   id uuid primary key default gen_random_uuid(),

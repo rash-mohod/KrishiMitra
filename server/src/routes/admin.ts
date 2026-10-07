@@ -6,7 +6,24 @@ import { equipmentToFrontend } from '../utils/mappers.js';
 import { ok, fail } from '../utils/http.js';
 const router=Router();
 router.use(requireAuth,requireRole('ADMIN'));
-router.get('/stats',async(_req,res)=>{const [{count:users}, {count:farmers},{count:owners},{count:equipment},{count:pendingEquipment},{count:bookings},{count:active},{count:completed}]=await Promise.all([supabaseAdmin.from('profiles').select('*',{count:'exact',head:true}),supabaseAdmin.from('profiles').select('*',{count:'exact',head:true}).eq('role','FARMER'),supabaseAdmin.from('profiles').select('*',{count:'exact',head:true}).eq('role','OWNER'),supabaseAdmin.from('equipment').select('*',{count:'exact',head:true}).eq('is_active',true),supabaseAdmin.from('equipment').select('*',{count:'exact',head:true}).eq('approval_status','PENDING'),supabaseAdmin.from('bookings').select('*',{count:'exact',head:true}),supabaseAdmin.from('bookings').select('*',{count:'exact',head:true}).eq('status','ACTIVE'),supabaseAdmin.from('bookings').select('*',{count:'exact',head:true}).eq('status','COMPLETED')]);return ok(res,{totalGMV:0,platformRevenue:0,totalUsers:users??0,farmersCount:farmers??0,ownersCount:owners??0,totalEquipment:equipment??0,pendingEquipment:pendingEquipment??0,totalBookings:bookings??0,activeRentals:active??0,completedRentals:completed??0});});
+router.get('/stats',async(_req,res,next)=>{try{
+  const [{count:users}, {count:farmers},{count:owners},{count:equipment},{count:pendingEquipment},{count:bookings},{count:active},{count:completed}, paymentResult]=await Promise.all([
+    supabaseAdmin.from('profiles').select('*',{count:'exact',head:true}),
+    supabaseAdmin.from('profiles').select('*',{count:'exact',head:true}).eq('role','FARMER'),
+    supabaseAdmin.from('profiles').select('*',{count:'exact',head:true}).eq('role','OWNER'),
+    supabaseAdmin.from('equipment').select('*',{count:'exact',head:true}).eq('is_active',true),
+    supabaseAdmin.from('equipment').select('*',{count:'exact',head:true}).eq('approval_status','PENDING'),
+    supabaseAdmin.from('bookings').select('*',{count:'exact',head:true}),
+    supabaseAdmin.from('bookings').select('*',{count:'exact',head:true}).eq('status','ACTIVE'),
+    supabaseAdmin.from('bookings').select('*',{count:'exact',head:true}).eq('status','COMPLETED'),
+    supabaseAdmin.from('payments').select('total_rental_amount,platform_fee,payment_status,booking:bookings(status)')
+  ]);
+  if(paymentResult.error) return fail(res,paymentResult.error.message,500);
+  const validPayments=(paymentResult.data??[]).filter((p:any)=>p.payment_status==='PAID' && !['REJECTED','CANCELLED','EXPIRED'].includes(p.booking?.status));
+  const totalGMV=validPayments.reduce((sum:number,p:any)=>sum+Number(p.total_rental_amount??0),0);
+  const platformRevenue=validPayments.reduce((sum:number,p:any)=>sum+Number(p.platform_fee??0),0);
+  return ok(res,{totalGMV,platformRevenue,totalUsers:users??0,farmersCount:farmers??0,ownersCount:owners??0,totalEquipment:equipment??0,pendingEquipment:pendingEquipment??0,totalBookings:bookings??0,activeRentals:active??0,completedRentals:completed??0});
+}catch(e){next(e);}});
 router.get('/equipment',async(_req,res)=>{const {data,error}=await supabaseAdmin.from('equipment').select('*, owner:profiles!equipment_owner_id_fkey(id,full_name,phone,is_verified)').order('created_at',{ascending:false});if(error)return fail(res,error.message,500);return ok(res,{items:(data??[]).map(equipmentToFrontend)});});
 router.patch('/equipment/:id/approve',async(req,res)=>{const {data,error}=await supabaseAdmin.from('equipment').update({approval_status:'APPROVED',rejection_reason:null}).eq('id',req.params.id).select('*, owner:profiles!equipment_owner_id_fkey(id,full_name,phone,is_verified)').single();if(error)return fail(res,error.message,400);return ok(res,{equipment:equipmentToFrontend(data)});});
 router.patch('/equipment/:id/reject',async(req,res)=>{const reason=z.object({reason:z.string().min(2)}).parse(req.body).reason;const {data,error}=await supabaseAdmin.from('equipment').update({approval_status:'REJECTED',rejection_reason:reason}).eq('id',req.params.id).select('*, owner:profiles!equipment_owner_id_fkey(id,full_name,phone,is_verified)').single();if(error)return fail(res,error.message,400);return ok(res,{equipment:equipmentToFrontend(data)});});

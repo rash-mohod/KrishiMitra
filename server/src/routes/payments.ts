@@ -9,16 +9,62 @@ import { createRazorpayOrder, getRazorpayPayment, verifyPaymentSignature, verify
 const router = Router();
 
 async function loadBookingForPayment(id: string) {
-  return supabaseAdmin.from('bookings').select('*, equipment:equipment!bookings_equipment_id_fkey(id,name,daily_rate,booking_amount,owner_id), farmer:profiles!bookings_farmer_id_fkey(id,full_name,email,phone)').eq('id', id).single();
+  // Keep the explicit FK relationships here so Supabase resolves the same
+  // booking -> equipment and booking -> farmer relationships used elsewhere.
+  return supabaseAdmin
+    .from('bookings')
+    .select('*, equipment:equipment!bookings_equipment_id_fkey(id,name,daily_rate,booking_amount,owner_id), farmer:profiles!bookings_farmer_id_fkey(id,full_name,email,phone)')
+    .eq('id', id)
+    .single();
+}
+
+const PAYMENT_BOOKING_SELECT = `
+  *,
+  booking:bookings(
+    booking_code,
+    farmer_id,
+    equipment:equipment!bookings_equipment_id_fkey(id,name,owner_id),
+    farmer:profiles!bookings_farmer_id_fkey(id,full_name,email,phone)
+  )
+`;
+
+async function enrichPaymentRows(rows: any[]) {
+  const ownerIds = [...new Set((rows ?? []).map((p) => p.owner_id || p.booking?.equipment?.owner_id).filter(Boolean))];
+  if (!ownerIds.length) return rows ?? [];
+
+  const { data: owners, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id,full_name,email,phone')
+    .in('id', ownerIds);
+  if (error) throw error;
+
+  const ownerMap = new Map((owners ?? []).map((owner) => [owner.id, owner]));
+  return (rows ?? []).map((p) => {
+    const ownerId = p.owner_id || p.booking?.equipment?.owner_id;
+    const owner = ownerMap.get(ownerId);
+    return {
+      ...p,
+      booking: p.booking
+        ? {
+            ...p.booking,
+            equipment: p.booking.equipment
+              ? { ...p.booking.equipment, owner }
+              : p.booking.equipment
+          }
+        : p.booking
+    };
+  });
 }
 
 function paymentToFrontend(p: any) {
   return {
     id: p.id, bookingId: p.booking_id, bookingCode: p.booking?.booking_code ?? '',
+    equipmentId: p.booking?.equipment?.id ?? '',
+    equipmentName: p.booking?.equipment?.name ?? '',
     userId: p.farmer_id, userName: p.booking?.farmer?.full_name ?? '', userRole: 'FARMER',
     ownerId: p.owner_id, ownerName: p.booking?.equipment?.owner?.full_name ?? '',
-    amount: Number(p.online_payment_amount ?? 0), platformFee: Number(p.platform_fee ?? 0),
-    ownerNetEarnings: Number(p.remaining_rental_amount ?? 0), currency: 'INR',
+    amount: Number(p.online_payment_amount ?? 0) + (p.remaining_payment_status === 'PAID' ? Number(p.remaining_rental_amount ?? 0) : 0), platformFee: Number(p.platform_fee ?? 0),
+    ownerNetEarnings: Number(p.booking_amount ?? 0) + (p.remaining_payment_status === 'PAID' ? Number(p.remaining_rental_amount ?? 0) : 0), currency: 'INR',
     status: p.payment_status, paymentMethod: 'RAZORPAY', razorpayOrderId: p.razorpay_order_id ?? '',
     razorpayPaymentId: p.razorpay_payment_id ?? undefined, razorpaySignature: p.razorpay_signature ?? undefined,
     createdAt: p.created_at,
@@ -117,52 +163,55 @@ router.post('/webhook', async (req: any, res) => {
 
 router.get('/my-payments', requireAuth, requireRole('FARMER'), async (req: AuthRequest, res, next) => {
   try {
-    const { data, error } = await supabaseAdmin.from('payments').select('*, booking:bookings(booking_code)').eq('farmer_id', req.user!.id).order('created_at', { ascending: false });
+    const { data, error } = await supabaseAdmin
+      .from('payments')
+      .select(PAYMENT_BOOKING_SELECT)
+      .eq('farmer_id', req.user!.id)
+      .order('created_at', { ascending: false });
     if (error) return fail(res, error.message, 500);
-    return ok(res, { payments: (data ?? []).map(paymentToFrontend) });
+    const enriched = await enrichPaymentRows(data ?? []);
+    return ok(res, { payments: enriched.map(paymentToFrontend) });
   } catch (e) { next(e); }
 });
 
 router.get('/owner', requireAuth, requireRole('OWNER'), async (req: AuthRequest, res, next) => {
   try {
-    const { data, error } = await supabaseAdmin.from('payments').select('*, booking:bookings(booking_code)').eq('owner_id', req.user!.id).order('created_at', { ascending: false });
+    const { data, error } = await supabaseAdmin
+      .from('payments')
+      .select(PAYMENT_BOOKING_SELECT)
+      .eq('owner_id', req.user!.id)
+      .order('created_at', { ascending: false });
     if (error) return fail(res, error.message, 500);
-    return ok(res, { payments: (data ?? []).map(paymentToFrontend) });
+    const enriched = await enrichPaymentRows(data ?? []);
+    return ok(res, { payments: enriched.map(paymentToFrontend) });
   } catch (e) { next(e); }
 });
 
 router.get('/admin', requireAuth, requireRole('ADMIN'), async (_req, res, next) => {
   try {
-    const { data, error } = await supabaseAdmin.from('payments').select('*, booking:bookings(booking_code)').order('created_at', { ascending: false });
+    const { data, error } = await supabaseAdmin
+      .from('payments')
+      .select(PAYMENT_BOOKING_SELECT)
+      .order('created_at', { ascending: false });
     if (error) return fail(res, error.message, 500);
-    return ok(res, { payments: (data ?? []).map(paymentToFrontend) });
+    const enriched = await enrichPaymentRows(data ?? []);
+    return ok(res, { payments: enriched.map(paymentToFrontend) });
   } catch (e) { next(e); }
 });
 
 router.get('/:bookingId', requireAuth, async (req: AuthRequest, res) => {
-  const { data: payment, error } = await supabaseAdmin.from('payments').select('*, booking:bookings(booking_code,farmer_id,equipment:equipment(name))').eq('booking_id', req.params.bookingId).single();
+  const { data: rows, error } = await supabaseAdmin
+    .from('payments')
+    .select(PAYMENT_BOOKING_SELECT)
+    .eq('booking_id', req.params.bookingId)
+    .limit(1);
+  const payment = rows?.[0];
   if (error || !payment) return fail(res, 'Payment not found.', 404);
   const allowed = req.user!.role === 'ADMIN' || payment.farmer_id === req.user!.id || payment.owner_id === req.user!.id;
   if (!allowed) return fail(res, 'Forbidden.', 403);
-  return ok(res, { payment: paymentToFrontend(payment) });
+  const [enriched] = await enrichPaymentRows([payment]);
+  return ok(res, { payment: paymentToFrontend(enriched) });
 });
-
-async function ensureRentalCompletedMarker(booking: any, payment: any) {
-  if (payment.rental_completed_at) return payment;
-  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
-  if (String(booking.end_date) < today) {
-    const { data, error } = await supabaseAdmin
-      .from('payments')
-      .update({ rental_completed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq('booking_id', booking.id)
-      .is('rental_completed_at', null)
-      .select('*')
-      .single();
-    if (error) throw new Error(error.message);
-    return data ?? payment;
-  }
-  return payment;
-}
 
 router.post('/:bookingId/remaining-payment/create-order', requireAuth, requireRole('FARMER'), async (req: AuthRequest, res, next) => {
   try {
@@ -174,11 +223,10 @@ router.post('/:bookingId/remaining-payment/create-order', requireAuth, requireRo
     const { data: payment, error: paymentError } = await supabaseAdmin.from('payments').select('*').eq('booking_id', bookingId).single();
     if (paymentError || !payment) return fail(res, 'Payment record not found.', 404);
 
-    const markedPayment = await ensureRentalCompletedMarker(booking, payment);
-    const remaining = Number(markedPayment.remaining_rental_amount ?? 0);
+    if (booking.status !== 'ACTIVE') return fail(res, 'Remaining payment is available only while the rental is active.', 409);
+    const remaining = Number(payment.remaining_rental_amount ?? 0);
     if (remaining <= 0) return fail(res, 'No remaining rental amount is due.', 400);
-    if (markedPayment.remaining_payment_status === 'PAID') return fail(res, 'Remaining rental payment is already paid.', 409);
-    if (!markedPayment.rental_completed_at) return fail(res, 'Rental is not completed yet.', 409);
+    if (payment.remaining_payment_status === 'PAID') return fail(res, 'Remaining rental payment is already paid.', 409);
 
     const order = await createRazorpayOrder(remaining, `KM-REM-${booking.booking_code}`, {
       bookingId: booking.id,
@@ -213,11 +261,10 @@ router.post('/:bookingId/remaining-payment/verify', requireAuth, requireRole('FA
 
     const { data: payment, error: paymentError } = await supabaseAdmin.from('payments').select('*').eq('booking_id', bookingId).single();
     if (paymentError || !payment) return fail(res, 'Payment record not found.', 404);
-    const markedPayment = await ensureRentalCompletedMarker(booking, payment);
-    const remaining = Number(markedPayment.remaining_rental_amount ?? 0);
+    if (booking.status !== 'ACTIVE') return fail(res, 'Remaining payment is available only while the rental is active.', 409);
+    const remaining = Number(payment.remaining_rental_amount ?? 0);
     if (remaining <= 0) return fail(res, 'No remaining rental amount is due.', 400);
-    if (markedPayment.remaining_payment_status === 'PAID') return ok(res, { success: true, alreadyPaid: true, payment: paymentToFrontend(markedPayment) });
-    if (!markedPayment.rental_completed_at) return fail(res, 'Rental is not completed yet.', 409);
+    if (payment.remaining_payment_status === 'PAID') return ok(res, { success: true, alreadyPaid: true, payment: paymentToFrontend(payment) });
 
     if (!verifyPaymentSignature(input.razorpay_order_id, input.razorpay_payment_id, input.razorpay_signature)) {
       return fail(res, 'Invalid payment signature.', 400);
@@ -241,7 +288,6 @@ router.post('/:bookingId/remaining-payment/verify', requireAuth, requireRole('FA
       .single();
     if (updateError) return fail(res, updateError.message, 500);
 
-    await supabaseAdmin.from('bookings').update({ status: 'COMPLETED' }).eq('id', bookingId).eq('status', 'ACTIVE');
     await supabaseAdmin.from('notifications').insert({
       user_id: booking.equipment.owner_id,
       title: 'Remaining Rental Payment Received',
@@ -265,11 +311,10 @@ router.post('/:bookingId/remaining-payment/request-cash', requireAuth, requireRo
 
     const { data: payment, error: paymentError } = await supabaseAdmin.from('payments').select('*').eq('booking_id', bookingId).single();
     if (paymentError || !payment) return fail(res, 'Payment record not found.', 404);
-    const markedPayment = await ensureRentalCompletedMarker(booking, payment);
-    const remaining = Number(markedPayment.remaining_rental_amount ?? 0);
+    if (booking.status !== 'ACTIVE') return fail(res, 'Remaining payment is available only while the rental is active.', 409);
+    const remaining = Number(payment.remaining_rental_amount ?? 0);
     if (remaining <= 0) return fail(res, 'No remaining rental amount is due.', 400);
-    if (!markedPayment.rental_completed_at) return fail(res, 'Rental is not completed yet.', 409);
-    if (markedPayment.remaining_payment_status === 'PAID') return fail(res, 'Remaining rental payment is already paid.', 409);
+    if (payment.remaining_payment_status === 'PAID') return fail(res, 'Remaining rental payment is already paid.', 409);
 
     const { data: updated, error: updateError } = await supabaseAdmin.from('payments').update({
       remaining_payment_method: 'CASH',
@@ -297,10 +342,9 @@ router.patch('/:bookingId/remaining-payment', requireAuth, requireRole('OWNER'),
     if (payment.owner_id !== req.user!.id) return fail(res, 'Forbidden.', 403);
     if (Number(payment.remaining_rental_amount) <= 0) return fail(res, 'No remaining rental amount is due.', 400);
     if (payment.remaining_payment_status === 'PAID') return fail(res, 'Remaining rental payment is already confirmed.', 409);
-    const { data: booking, error: bookingError } = await supabaseAdmin.from('bookings').select('id,end_date,booking_code,farmer_id,equipment:equipment!bookings_equipment_id_fkey(owner_id,name)').eq('id', payment.booking_id).single();
+    const { data: booking, error: bookingError } = await supabaseAdmin.from('bookings').select('id,status,booking_code,farmer_id,equipment:equipment!bookings_equipment_id_fkey(owner_id,name)').eq('id', payment.booking_id).single();
     if (bookingError || !booking) return fail(res, 'Booking not found.', 404);
-    const markedPayment = await ensureRentalCompletedMarker(booking, payment);
-    if (!markedPayment.rental_completed_at) return fail(res, 'Rental is not completed yet.', 409);
+    if (booking.status !== 'ACTIVE') return fail(res, 'Remaining payment can only be confirmed while the rental is active.', 409);
     if (method === 'CASH' && payment.remaining_payment_method !== 'CASH') return fail(res, 'The farmer has not selected cash payment for this remaining amount.', 409);
     const { data: updated, error: updateError } = await supabaseAdmin.from('payments').update({ remaining_payment_status: 'PAID', remaining_payment_method: method, remaining_payment_note: note ?? (method === 'CASH' ? 'Cash received and confirmed by owner.' : 'Payment received and confirmed by owner.'), owner_payment_confirmed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('booking_id', req.params.bookingId).eq('remaining_payment_status', 'PENDING').select('*').single();
     if (updateError) return fail(res, updateError.message, 500);

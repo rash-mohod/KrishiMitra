@@ -18,6 +18,8 @@ const bookingInput = z.object({
   operatorIncluded: z.boolean().optional().default(false)
 });
 const blockingStatuses = ['PENDING', 'PAYMENT_PENDING', 'CONFIRMED', 'ACTIVE'];
+
+const indiaToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
 const select = '*, equipment:equipment!bookings_equipment_id_fkey(*, owner:profiles!equipment_owner_id_fkey(id,full_name,phone,is_verified)), farmer:profiles!bookings_farmer_id_fkey(id,full_name,email,phone,state,district,village), payment:payments(*)';
 
 async function getBooking(id: string) {
@@ -26,11 +28,32 @@ async function getBooking(id: string) {
   return data;
 }
 
-async function markExpiredRentalsCompleted() {
-  const today = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kolkata'
-  }).format(new Date());
+async function markExpiredBookings() {
+  const today = indiaToday();
+  const { data, error } = await supabaseAdmin
+    .from('bookings')
+    .select('id,farmer_id,booking_code')
+    .eq('status', 'PENDING')
+    .lt('start_date', today);
 
+  if (error) throw new Error(error.message);
+  for (const booking of data ?? []) {
+    const { data: expired, error: updateError } = await supabaseAdmin
+      .from('bookings')
+      .update({ status: 'EXPIRED' })
+      .eq('id', booking.id)
+      .eq('status', 'PENDING')
+      .select('id')
+      .maybeSingle();
+    if (updateError) throw new Error(updateError.message);
+    if (expired) {
+      await notify(booking.farmer_id, 'Booking Expired', `Booking ${booking.booking_code} expired because the rental start date passed without owner approval.`, booking.id);
+    }
+  }
+}
+
+async function markExpiredRentalsCompleted() {
+  const today = indiaToday();
   const { data, error } = await supabaseAdmin
     .from('bookings')
     .select('id')
@@ -38,9 +61,7 @@ async function markExpiredRentalsCompleted() {
     .lt('end_date', today);
 
   if (error) throw new Error(error.message);
-  if (!data?.length) return;
-
-  for (const booking of data) {
+  for (const booking of data ?? []) {
     await supabaseAdmin
       .from('payments')
       .update({ rental_completed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
@@ -102,6 +123,7 @@ router.post('/', requireAuth, requireRole('FARMER'), async (req: AuthRequest, re
 
 router.get('/my', requireAuth, async (req: AuthRequest, res, next) => {
   try {
+    await markExpiredBookings();
     await markExpiredRentalsCompleted();
     const { data, error } = await supabaseAdmin.from('bookings').select(select).eq('farmer_id', req.user!.id).order('created_at', { ascending: false });
     if (error) return fail(res, error.message, 500);
@@ -111,6 +133,7 @@ router.get('/my', requireAuth, async (req: AuthRequest, res, next) => {
 
 router.get('/owner', requireAuth, requireRole('OWNER'), async (req: AuthRequest, res, next) => {
   try {
+    await markExpiredBookings();
     await markExpiredRentalsCompleted();
     const { data, error } = await supabaseAdmin.from('bookings').select(select).eq('equipment.owner_id', req.user!.id).order('created_at', { ascending: false });
     if (error) return fail(res, error.message, 500);
@@ -120,6 +143,7 @@ router.get('/owner', requireAuth, requireRole('OWNER'), async (req: AuthRequest,
 
 router.get('/admin', requireAuth, requireRole('ADMIN'), async (_req, res, next) => {
   try {
+    await markExpiredBookings();
     const { data, error } = await supabaseAdmin.from('bookings').select(select).order('created_at', { ascending: false });
     if (error) return fail(res, error.message, 500);
     return ok(res, { bookings: (data ?? []).map(bookingToFrontend) });
@@ -127,6 +151,7 @@ router.get('/admin', requireAuth, requireRole('ADMIN'), async (_req, res, next) 
 });
 
 router.get('/:id', requireAuth, async (req: AuthRequest, res) => {
+  await markExpiredBookings();
   const b = await getBooking(req.params.id);
   if (!b) return fail(res, 'Booking not found.', 404);
   const ownerId = b.equipment?.owner_id;
@@ -156,9 +181,11 @@ router.post('/calculate-price', async (req, res) => {
 
 router.patch('/:id/accept', requireAuth, requireRole('OWNER'), async (req: AuthRequest, res, next) => {
   try {
+    await markExpiredBookings();
     const b = await getBooking(req.params.id);
     if (!b) return fail(res, 'Booking not found.', 404);
     if (b.equipment.owner_id !== req.user!.id) return fail(res, 'Forbidden.', 403);
+    if (b.status === 'EXPIRED') return fail(res, 'This booking has expired because the rental start date has passed.', 409);
     if (b.status !== 'PENDING') return fail(res, 'Only pending bookings can be accepted.', 409);
     if (await hasConflict(b.equipment_id, b.start_date, b.end_date, b.id)) return fail(res, 'Equipment is already booked for the selected dates.', 409);
     const note = z.object({ ownerNotes: z.string().optional() }).parse(req.body ?? {});
@@ -175,9 +202,11 @@ router.patch('/:id/accept', requireAuth, requireRole('OWNER'), async (req: AuthR
 
 router.patch('/:id/reject', requireAuth, requireRole('OWNER'), async (req: AuthRequest, res, next) => {
   try {
+    await markExpiredBookings();
     const b = await getBooking(req.params.id);
     if (!b) return fail(res, 'Booking not found.', 404);
     if (b.equipment.owner_id !== req.user!.id) return fail(res, 'Forbidden.', 403);
+    if (b.status === 'EXPIRED') return fail(res, 'This booking has already expired.', 409);
     const reason = z.object({ reason: z.string().min(2) }).parse(req.body).reason;
     const { data, error } = await supabaseAdmin.from('bookings').update({ status: 'REJECTED', rejection_reason: reason }).eq('id', b.id).eq('status', 'PENDING').select('id').single();
     if (error) return fail(res, error.message, 400);
@@ -209,11 +238,44 @@ router.patch('/:id/start', requireAuth, requireRole('OWNER'), async (req: AuthRe
   if (!b) return fail(res, 'Booking not found.', 404);
   if (b.equipment.owner_id !== req.user!.id) return fail(res, 'Forbidden.', 403);
   if (b.status !== 'CONFIRMED') return fail(res, 'Only paid and confirmed bookings can be started.', 409);
-  const { data, error } = await supabaseAdmin.from('bookings').update({ status: 'ACTIVE' }).eq('id', b.id).select('id').single();
+  const today = indiaToday();
+  if (String(b.end_date) < today) return fail(res, 'Rental period has already ended. This rental cannot be started.', 409);
+  if (String(b.start_date) > today) return fail(res, 'Rental cannot be started before the rental start date.', 409);
+  const { data, error } = await supabaseAdmin.from('bookings').update({ status: 'ACTIVE' }).eq('id', b.id).eq('status', 'CONFIRMED').select('id').single();
   if (error) return fail(res, error.message, 400);
   const u = await getBooking(data.id);
   await notify(b.farmer_id, 'Rental Started', 'Your equipment rental has been marked active.', b.id);
   return ok(res, { booking: bookingToFrontend(u) });
+});
+
+router.patch('/:id/stop', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const b = await getBooking(req.params.id);
+    if (!b) return fail(res, 'Booking not found.', 404);
+    const isOwner = req.user!.role === 'OWNER' && b.equipment.owner_id === req.user!.id;
+    const isFarmer = req.user!.role === 'FARMER' && b.farmer_id === req.user!.id;
+    if (!isOwner && !isFarmer) return fail(res, 'Forbidden.', 403);
+    if (b.status !== 'ACTIVE') return fail(res, 'Only active rentals can be stopped.', 409);
+    const input = z.object({
+      reason: z.string().min(2),
+      message: z.string().optional()
+    }).parse(req.body);
+    const stoppedBy = isOwner ? 'OWNER' : 'FARMER';
+    const { data, error } = await supabaseAdmin
+      .from('bookings')
+      .update({ status: 'STOPPED', stopped_by: stoppedBy, stop_reason: input.reason, stop_message: input.message?.trim() || null, stopped_at: new Date().toISOString() })
+      .eq('id', b.id)
+      .eq('status', 'ACTIVE')
+      .select('id')
+      .single();
+    if (error) return fail(res, error.message, 400);
+    const updated = await getBooking(data.id);
+    const otherUserId = isOwner ? b.farmer_id : b.equipment.owner_id;
+    const who = isOwner ? 'Owner' : 'Farmer';
+    const detail = input.message?.trim() ? ` Message: ${input.message.trim()}` : '';
+    await notify(otherUserId, 'Rental Stopped', `${who} stopped rental ${b.booking_code}. Reason: ${input.reason}.${detail}`, b.id);
+    return ok(res, { booking: bookingToFrontend(updated) });
+  } catch (e) { next(e); }
 });
 
 router.post('/:id/rental-completed', requireAuth, requireRole('FARMER'), async (req: AuthRequest, res) => {

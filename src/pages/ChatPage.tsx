@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { ChatConversation, ChatMessage, ChatParticipant, Equipment, MessageReport, User } from '../types';
+import { ChatConversation, ChatMessage, ChatParticipant, Equipment, User } from '../types';
 import { authApi, chatApi, equipmentApi } from '../services/api';
 import { Avatar } from '../components/common/Avatar';
 import { wsClient } from '../services/wsClient';
@@ -21,7 +21,6 @@ import {
   HelpCircle,
   Image as ImageIcon,
   Info,
-  LifeBuoy,
   MapPin,
   MessageSquare,
   MoreVertical,
@@ -66,7 +65,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   const [selectedConvId, setSelectedConvId] = useState<string | null>(initialConversationId || null);
   const [activeConversation, setActiveConversation] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [filterType, setFilterType] = useState<'ALL' | 'EQUIPMENT' | 'SUPPORT' | 'DISPUTES' | 'ARCHIVED'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'EQUIPMENT' | 'DISPUTES' | 'ARCHIVED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingConvs, setIsLoadingConvs] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -106,10 +105,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
   const [composeEquipmentId, setComposeEquipmentId] = useState<string>('');
   const [composeText, setComposeText] = useState('');
   const [isSendingCompose, setIsSendingCompose] = useState(false);
-
-  // Admin Reports Tab (For Admin users)
-  const [adminReports, setAdminReports] = useState<MessageReport[]>([]);
-  const [isLoadingReports, setIsLoadingReports] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -259,9 +254,9 @@ export const ChatPage: React.FC<ChatPageProps> = ({
         // Enforce allowed messaging pairs
         const allowed = users.filter(u => {
           if (u.id === user.id) return false;
-          if (user.role === 'FARMER') return u.role === 'OWNER' || u.role === 'ADMIN';
-          if (user.role === 'OWNER') return u.role === 'FARMER' || u.role === 'ADMIN';
-          return true; // Admin can message anyone
+          if (user.role === 'FARMER') return u.role === 'OWNER';
+          if (user.role === 'OWNER') return u.role === 'FARMER';
+          return false;
         });
         setAvailableUsers(allowed);
         if (allowed.length > 0 && !composeRecipientId) {
@@ -272,10 +267,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
     // Equipment options are loaded only when the new-chat composer is opened.
     // This keeps opening the Messenger page fast.
-    if (user?.role === 'ADMIN') {
-      loadAdminReports();
-    }
-  }, [user?.id, user?.role]);
+      }, [user?.id, user?.role]);
 
   // Load composer-only data on demand instead of blocking Messenger startup.
   useEffect(() => {
@@ -290,9 +282,9 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
       const allowed = users.filter(u => {
         if (u.id === user.id) return false;
-        if (user.role === 'FARMER') return u.role === 'OWNER' || u.role === 'ADMIN';
-        if (user.role === 'OWNER') return u.role === 'FARMER' || u.role === 'ADMIN';
-        return true;
+        if (user.role === 'FARMER') return u.role === 'OWNER';
+        if (user.role === 'OWNER') return u.role === 'FARMER';
+        return false;
       });
 
       setAvailableUsers(allowed);
@@ -355,19 +347,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
       if (conv) setActiveConversation(conv);
     } finally {
       if (showLoading) setIsLoadingMessages(false);
-    }
-  };
-
-  const loadAdminReports = async () => {
-    if (user?.role !== 'ADMIN') return;
-    setIsLoadingReports(true);
-    try {
-      const reports = await chatApi.getMessageReports();
-      setAdminReports(reports);
-    } catch (err) {
-      console.error('Failed to load admin reports:', err);
-    } finally {
-      setIsLoadingReports(false);
     }
   };
 
@@ -509,8 +488,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     const conv = await chatApi.getOrCreateConversation({
       currentUserId: user.id,
       targetUserId: targetUser.id,
-      topic: topic || (targetUser.role === 'ADMIN' ? 'Agri Extension Desk Support' : `Direct Inquiry with ${targetUser.name}`),
-      initialMessage: initialText || (targetUser.role === 'ADMIN' ? 'Namaste Agri Desk, I have an inquiry regarding equipment subsidy and verification.' : `Namaste ${targetUser.name} ji, connecting regarding farm machinery rental services.`)
+      topic: topic || `Rental Inquiry with ${targetUser.name}`,
+      initialMessage: initialText || `Namaste ${targetUser.name} ji, connecting regarding farm machinery rental services.`
     });
 
     setNewChatModalOpen(false);
@@ -594,15 +573,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
     }
   };
 
-  const handleResolveReport = async (reportId: string, status: string) => {
-    try {
-      await chatApi.updateMessageReport(reportId, status);
-      await loadAdminReports();
-    } catch (err) {
-      console.error('Failed to update report status:', err);
-    }
-  };
-
   // Filter conversations
   const filteredConversations = useMemo(() => {
     return conversations.filter(c => {
@@ -625,9 +595,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
 
       if (filterType === 'EQUIPMENT') {
         return c.type === 'RENTER_OWNER' || c.type === 'BOOKING' || !!c.equipmentId;
-      }
-      if (filterType === 'SUPPORT') {
-        return c.type === 'ADMIN_RENTER' || c.type === 'ADMIN_OWNER' || c.type === 'SUPPORT';
       }
       if (filterType === 'DISPUTES') {
         return c.type === 'DISPUTE' || !!c.disputeId;
@@ -667,10 +634,8 @@ export const ChatPage: React.FC<ChatPageProps> = ({
           </div>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-stone-900 mt-1">
             {user?.role === 'FARMER'
-              ? t('chat.farmerHeading', 'Direct Machinery Owner & Desk Chat')
-              : user?.role === 'OWNER'
-              ? t('chat.ownerHeading', 'Farmer Inquiries & Fleet Dispatch Chat')
-              : t('chat.adminHeading', 'Agri Support Desk & Moderation Inbox')}
+              ? t('chat.farmerHeading', 'Machinery Owner Conversations')
+              : t('chat.ownerHeading', 'Farmer Conversations')}
           </h1>
         </div>
 
@@ -684,19 +649,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                 {user.role}
               </span>
             </div>
-          )}
-
-          {user?.role !== 'ADMIN' && (
-            <button
-              onClick={() => {
-                const admin = availableUsers.find(u => u.role === 'ADMIN');
-                if (admin) handleStartNewChatWithUser(admin, 'Official Krishi Mitra Helpdesk');
-              }}
-              className="px-3.5 py-2 bg-stone-900 hover:bg-black text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <LifeBuoy className="w-4 h-4 text-amber-400" />
-              <span>{t('chat.supportDesk', 'Agri Support Desk')}</span>
-            </button>
           )}
 
           <button
@@ -747,7 +699,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
               <button
                 onClick={() => setNewChatModalOpen(true)}
                 className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl transition cursor-pointer shrink-0"
-                title={t('chat.startDirectChat', 'Start Direct Chat')}
+                title={t('chat.startConversation', 'Start Conversation')}
               >
                 <UserPlus className="w-4 h-4" />
               </button>
@@ -770,14 +722,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                 }`}
               >
                 {t('chat.filterRentals', 'Rentals')}
-              </button>
-              <button
-                onClick={() => setFilterType('SUPPORT')}
-                className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
-                  filterType === 'SUPPORT' ? 'bg-white text-stone-900 shadow-xs font-bold' : 'hover:text-stone-900'
-                }`}
-              >
-                {t('chat.filterSupport', 'Support')}
               </button>
               <button
                 onClick={() => setFilterType('DISPUTES')}
@@ -814,7 +758,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   {filterType === 'ARCHIVED' ? t('chat.noArchived', 'No archived conversations') : t('chat.noConversations', 'No conversations found')}
                 </p>
                 <p className="text-[11px] text-stone-500 max-w-[200px] mx-auto">
-                  {t('chat.emptyHint', 'Message a verified tractor owner or the Krishi Mitra Agri Desk directly.')}
+                  {t('chat.emptyHint', 'Message a verified farmer or machinery owner about rentals and bookings.')}
                 </p>
                 <button
                   onClick={() => setNewChatModalOpen(true)}
@@ -828,7 +772,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                 const counterpart = getCounterpart(conv);
                 const isSelected = selectedConvId === conv.id;
                 const unread = user ? (conv.unreadCountForUser[user.id] || 0) : 0;
-                const isAdmin = counterpart.role === 'ADMIN';
                 const isOnline = counterpart.isOnline;
                 const isTyping = Object.keys(typingUsers).includes(counterpart.userId || counterpart.id);
 
@@ -876,10 +819,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                         {conv.disputeCode ? (
                           <span className="text-[9px] font-bold text-red-800 bg-red-100 px-1.5 py-0.2 rounded">
                             ⚖️ Dispute #{conv.disputeCode}
-                          </span>
-                        ) : isAdmin ? (
-                          <span className="text-[9px] font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
-                            {t('chat.agriExtensionDesk', 'Agri Extension Desk')}
                           </span>
                         ) : conv.equipmentName ? (
                           <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100/70 px-1.5 py-0.2 rounded truncate max-w-[170px]">
@@ -960,15 +899,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                         {activeCounterpart.name}
                       </h3>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        activeCounterpart.role === 'ADMIN'
-                          ? 'bg-stone-900 text-amber-300'
-                          : activeCounterpart.role === 'OWNER'
+                        activeCounterpart.role === 'OWNER'
                           ? 'bg-emerald-100 text-emerald-800'
                           : 'bg-blue-100 text-blue-800'
                       }`}>
-                        {activeCounterpart.role === 'ADMIN'
-                          ? t('chat.agriSupportDesk', 'Agri Support Desk')
-                          : activeCounterpart.role === 'OWNER'
+                        {activeCounterpart.role === 'OWNER'
                           ? t('chat.fleetOwner', 'Fleet Owner')
                           : t('chat.farmer', 'Farmer')}
                       </span>
@@ -1350,7 +1285,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                             )}
 
                             {/* Delete (own or admin) */}
-                            {(isMe || user?.role === 'ADMIN') && (
+                            {isMe && (
                               <button
                                 onClick={() => handleDeleteMessage(msg.id)}
                                 className="p-1 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
@@ -1549,7 +1484,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                       {t('chat.composeSendTitle', 'Compose & Send New Message')}
                     </h3>
                     <p className="text-xs text-stone-500">
-                      {t('chat.composeSendDesc', 'Send a direct inquiry to equipment owners, farmers, or official platform support.')}
+                      {t('chat.composeSendDesc', 'Send a rental or booking message to a farmer or machinery owner.')}
                     </p>
                   </div>
                 </div>
@@ -1570,7 +1505,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                     >
                       {availableUsers.map(u => (
                         <option key={u.id} value={u.id}>
-                          {u.name} — {u.role === 'ADMIN' ? t('chat.agriExtensionOfficerOption', 'Agri Extension Desk (Officer)') : u.role === 'OWNER' ? `${t('chat.fleetOwner', 'Fleet Owner')} (${u.district})` : `${t('chat.farmer', 'Farmer')} (${u.district})`}
+                          {u.name} — {u.role === 'OWNER' ? `${t('chat.fleetOwner', 'Fleet Owner')} (${u.district})` : `${t('chat.farmer', 'Farmer')} (${u.district})`}
                         </option>
                       ))}
                     </select>
@@ -1672,7 +1607,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   {t('chat.startDirectConversation', 'Start Direct Conversation')}
                 </h3>
                 <p className="text-xs text-stone-500">
-                  {t('chat.selectRecipientHint', 'Select a farmer, equipment owner, or support officer')}
+                  {t('chat.selectRecipientHint', 'Select a farmer or equipment owner')}
                 </p>
               </div>
               <button
@@ -1708,13 +1643,11 @@ export const ChatPage: React.FC<ChatPageProps> = ({
                   </div>
 
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                    targetUser.role === 'ADMIN'
-                      ? 'bg-stone-900 text-amber-300'
-                      : targetUser.role === 'OWNER'
+                    targetUser.role === 'OWNER'
                       ? 'bg-emerald-100 text-emerald-800'
                       : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {targetUser.role === 'ADMIN' ? 'Agri Support Officer' : translateRole(targetUser.role)}
+                    {translateRole(targetUser.role)}
                   </span>
                 </button>
               ))}

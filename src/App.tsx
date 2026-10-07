@@ -120,7 +120,8 @@ const AppContent: React.FC = () => {
           />
         );
       }
-      if (user.role !== 'FARMER' && user.role !== 'ADMIN') {
+      if (user.role !== 'FARMER') {
+        if (user.role === 'ADMIN') { navigate('/admin/dashboard'); return null; }
         return (
           <div className="max-w-md mx-auto my-16 p-8 bg-white rounded-3xl border border-stone-200 shadow-sm text-center space-y-4">
             <h2 className="text-xl font-bold text-stone-900">Access Restricted</h2>
@@ -162,7 +163,8 @@ const AppContent: React.FC = () => {
           />
         );
       }
-      if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
+      if (user.role !== 'OWNER') {
+        if (user.role === 'ADMIN') { navigate('/admin/dashboard'); return null; }
         return (
           <div className="max-w-md mx-auto my-16 p-8 bg-white rounded-3xl border border-stone-200 shadow-sm text-center space-y-4">
             <h2 className="text-xl font-bold text-stone-900">Access Restricted</h2>
@@ -206,7 +208,7 @@ const AppContent: React.FC = () => {
       }
       return (
         <AdminDashboard
-          initialTab={currentPath.includes('users') ? 'users' : currentPath.includes('bookings') ? 'bookings' : currentPath.includes('payments') ? 'payments' : 'moderation'}
+          initialTab={currentPath.includes('users') ? 'users' : currentPath.includes('bookings') ? 'bookings' : currentPath.includes('payments') ? 'payments' : currentPath.includes('inquiries') ? 'inquiries' : 'moderation'}
           onNavigate={navigate}
           onViewEquipment={handleSelectEquipment}
         />
@@ -275,6 +277,10 @@ const AppContent: React.FC = () => {
 
     // 8. Messages & Chat Route (Renter-Owner & Admin-Renter)
     if (currentPath.startsWith('/messages') || currentPath.startsWith('/chat')) {
+      if (user?.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+        return null;
+      }
       if (!user) {
         return (
           <AuthPages
@@ -330,7 +336,7 @@ const AppContent: React.FC = () => {
 
       
       {/* Global Floating Messenger Widget (Active everywhere for logged-in users except on full /messages page) */}
-      {!currentPath.startsWith('/messages') && !currentPath.startsWith('/chat') && (
+      {user && user.role !== 'ADMIN' && !currentPath.startsWith('/messages') && !currentPath.startsWith('/chat') && (
         <FloatingChatWidget
           onNavigateToMessages={(convId) => {
             if (convId) setSelectedConversationId(convId);

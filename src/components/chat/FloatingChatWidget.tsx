@@ -144,7 +144,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
     handleSendMessage(text);
   };
 
-  if (!user) return null;
+  if (!user || user.role === 'ADMIN') return null;
 
   const counterpart = activeConversation?.participants.find(p => (p.userId || p.id) !== user.id) || activeConversation?.participants[0];
   const cleanPhone = counterpart?.phone ? counterpart.phone.replace(/[^0-9]/g, '') : '';
@@ -173,7 +173,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
             )}
           </div>
           <span className="font-display font-bold text-xs">
-            {t('chat.directKisanChat', 'Direct Kisan Chat')}
+            {t('chat.directKisanChat', 'Messages')}
           </span>
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
         </button>
@@ -203,7 +203,7 @@ export const FloatingChatWidget: React.FC<FloatingChatWidgetProps> = ({
                     </div>
                     <div className="text-[10px] text-emerald-400 font-medium truncate flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                      {counterpart.role === 'ADMIN' ? t('chat.agriExtensionOfficer', 'Agri Extension Officer') : translateRole(counterpart.role)}
+                      {translateRole(counterpart.role)}
                     </div>
                   </div>
                 </div>

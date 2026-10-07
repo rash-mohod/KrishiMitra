@@ -45,9 +45,9 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <Award className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-white font-bold text-sm">{t('trust.escrowTitle', 'Verified Booking Process')}</h4>
+              <h4 className="text-white font-bold text-sm">{t('trust.paymentTitle', 'Verified Booking Process')}</h4>
               <p className="text-stone-400 text-xs mt-0.5 leading-relaxed">
-                {t('trust.escrowDesc', 'Booking requests are confirmed after owner approval and successful payment verification.')}
+                {t('trust.paymentDesc', 'Booking requests are confirmed after owner approval and successful payment verification.')}
               </p>
             </div>
           </div>

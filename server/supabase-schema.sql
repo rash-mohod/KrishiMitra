@@ -38,8 +38,8 @@ create table if not exists public.bookings (
   id uuid primary key default gen_random_uuid(), booking_code text unique not null default ('KM-' || upper(substr(replace(gen_random_uuid()::text,'-',''),1,8))),
   equipment_id uuid not null references public.equipment(id) on delete restrict, farmer_id uuid not null references public.profiles(id) on delete restrict,
   start_date date not null, end_date date not null, total_days integer not null check(total_days>0), daily_rate numeric(12,2) not null check(daily_rate>=0),
-  total_amount numeric(12,2) not null check(total_amount>=0), status text not null default 'PENDING' check(status in ('PENDING','ACCEPTED','ACTIVE','REJECTED','CANCELLED','COMPLETED')),
-  farmer_note text, owner_note text, rejection_reason text, cancellation_reason text, pickup_address text not null default '',
+  total_amount numeric(12,2) not null check(total_amount>=0), status text not null default 'PENDING' check(status in ('PENDING','PAYMENT_PENDING','CONFIRMED','ACTIVE','COMPLETED','REJECTED','CANCELLED','EXPIRED','STOPPED')),
+  farmer_note text, owner_note text, rejection_reason text, cancellation_reason text, stopped_by text check(stopped_by is null or stopped_by in ('FARMER','OWNER')), stop_reason text, stop_message text, stopped_at timestamptz, pickup_address text not null default '',
   created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
   check(end_date >= start_date)
 );
@@ -109,6 +109,7 @@ alter table public.conversations enable row level security;
 alter table public.conversation_participants enable row level security;
 alter table public.messages enable row level security;
 alter table public.message_reports enable row level security;
+alter table public.support_inquiries enable row level security;
 
 -- Revised booking advance + Razorpay payment model.
 ALTER TABLE public.equipment ADD COLUMN IF NOT EXISTS booking_amount numeric(12,2) NOT NULL DEFAULT 0;
@@ -116,7 +117,7 @@ ALTER TABLE public.equipment DROP CONSTRAINT IF EXISTS equipment_booking_amount_
 ALTER TABLE public.equipment ADD CONSTRAINT equipment_booking_amount_non_negative CHECK (booking_amount >= 0);
 
 ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS bookings_status_check;
-ALTER TABLE public.bookings ADD CONSTRAINT bookings_status_check CHECK (status IN ('PENDING','PAYMENT_PENDING','CONFIRMED','ACTIVE','COMPLETED','REJECTED','CANCELLED'));
+ALTER TABLE public.bookings ADD CONSTRAINT bookings_status_check CHECK (status IN ('PENDING','PAYMENT_PENDING','CONFIRMED','ACTIVE','COMPLETED','REJECTED','CANCELLED','EXPIRED','STOPPED'));
 
 CREATE TABLE IF NOT EXISTS public.payments (
   id uuid primary key default gen_random_uuid(),
@@ -130,7 +131,7 @@ CREATE TABLE IF NOT EXISTS public.payments (
   remaining_rental_amount numeric(12,2) not null default 0,
   payment_status text not null default 'PENDING' check(payment_status in ('PENDING','ORDER_CREATED','PAID','FAILED','REFUNDED','PARTIALLY_REFUNDED','VERIFICATION_FAILED')),
   remaining_payment_status text not null default 'PENDING' check(remaining_payment_status in ('PENDING','PAID','NOT_REQUIRED')),
-  remaining_payment_method text check(remaining_payment_method is null or remaining_payment_method in ('CASH','UPI')),
+  remaining_payment_method text check(remaining_payment_method is null or remaining_payment_method in ('CASH','UPI','RAZORPAY')),
   razorpay_order_id text,
   razorpay_payment_id text,
   razorpay_signature text,

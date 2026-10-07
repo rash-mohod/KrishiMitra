@@ -1,7 +1,7 @@
 import { Avatar } from '../../components/common/Avatar';
 import React, { useEffect, useState } from 'react';
-import { Booking, Category, Dispute, Equipment, PaymentTransaction, User } from '../../types';
-import { adminApi, authApi, bookingApi, equipmentApi, paymentApi } from '../../services/api';
+import { Booking, Category, Dispute, Equipment, PaymentTransaction, SupportInquiry, User } from '../../types';
+import { adminApi, authApi, bookingApi, equipmentApi, inquiryApi, paymentApi } from '../../services/api';
 import { useLanguage } from '../../context/LanguageContext';
 import {
   AlertCircle,
@@ -42,13 +42,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onViewEquipment
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
-  const { t } = useLanguage();
+  const { t, translateStatus } = useLanguage();
   const [stats, setStats] = useState<any>(null);
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
   const [usersList, setUsersList] = useState<User[]>([]);
   const [bookingsList, setBookingsList] = useState<Booking[]>([]);
   const [transactionsList, setTransactionsList] = useState<PaymentTransaction[]>([]);
   const [disputesList, setDisputesList] = useState<Dispute[]>([]);
+  const [inquiriesList, setInquiriesList] = useState<SupportInquiry[]>([]);
+  const [inquiryReplies, setInquiryReplies] = useState<Record<string, string>>({});
+  const [inquirySubmittingId, setInquirySubmittingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Moderation reject dialog
@@ -74,6 +77,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const allBookings = await bookingApi.getAllBookings();
       const allTxns = await paymentApi.getAllTransactions();
       const allDisputes = await adminApi.getDisputes();
+      const allInquiries = await inquiryApi.getAll().catch(() => [] as SupportInquiry[]);
 
       setStats(pStats);
       setEquipmentList(allEq);
@@ -81,6 +85,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       setBookingsList(allBookings);
       setTransactionsList(allTxns);
       setDisputesList(allDisputes);
+      setInquiriesList(allInquiries);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -121,6 +126,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   const pendingEquipment = equipmentList.filter(e => e.approvalStatus === 'PENDING');
+  const handleInquiryReply = async (inquiry: SupportInquiry) => {
+    const reply = (inquiryReplies[inquiry.id] || '').trim();
+    if (!reply) return;
+    try {
+      setInquirySubmittingId(inquiry.id);
+      const updated = await inquiryApi.update(inquiry.id, { reply, status: 'REPLIED' });
+      setInquiriesList(prev => prev.map(item => item.id === updated.id ? updated : item));
+      setInquiryReplies(prev => ({ ...prev, [inquiry.id]: '' }));
+      showToast(t('admin.inquiryReplySaved', 'Reply sent to the user.'), 'success');
+    } catch (err: any) {
+      showToast(err.message || t('admin.inquiryReplyFailed', 'Unable to send reply.'), 'error');
+    } finally {
+      setInquirySubmittingId(null);
+    }
+  };
+
+  const handleInquiryStatus = async (inquiry: SupportInquiry, status: SupportInquiry['status']) => {
+    try {
+      setInquirySubmittingId(inquiry.id);
+      const updated = await inquiryApi.update(inquiry.id, { status });
+      setInquiriesList(prev => prev.map(item => item.id === updated.id ? updated : item));
+    } catch (err: any) {
+      showToast(err.message || t('admin.inquiryStatusFailed', 'Unable to update inquiry status.'), 'error');
+    } finally {
+      setInquirySubmittingId(null);
+    }
+  };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -155,19 +188,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </span>
             </div>
             <p className="text-xs text-stone-400 mt-1">
-              {t('admin.subtitle', 'Supervising farm mechanization, machinery verification, and payment escrow arbitrations.')}
+              {t('admin.subtitle', 'Supervising farm mechanization, machinery verification, and payment and dispute support.')}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => onNavigate('/messages')}
-            className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
-          >
-            <MessageSquare className="w-4 h-4 text-amber-400" />
-            <span>{t('admin.supportChat', 'Support Chat Desk')}</span>
-          </button>
 
           <button
             onClick={loadAdminData}
@@ -278,6 +304,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('inquiries')}
+          className={`pb-3 px-3 border-b-2 transition whitespace-nowrap ${
+            activeTab === 'inquiries'
+              ? 'border-emerald-700 text-emerald-800'
+              : 'border-transparent text-stone-500 hover:text-stone-800'
+          }`}
+        >
+          {t('admin.userInquiries', 'User Inquiries')} ({inquiriesList.length})
+        </button>
+
+        <button
           onClick={() => setActiveTab('payments')}
           className={`pb-3 px-3 border-b-2 transition whitespace-nowrap ${
             activeTab === 'payments'
@@ -285,7 +322,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
-          {t('admin.paymentEscrowLogs', 'Payment Escrow Logs')} ({transactionsList.length})
+          {t('admin.paymentRecords', 'Payment Records')} ({transactionsList.length})
         </button>
       </div>
 
@@ -498,11 +535,77 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
+      {/* TAB CONTENT: USER INQUIRIES */}
+      {activeTab === 'inquiries' && (
+        <div className="space-y-4">
+          {inquiriesList.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center text-xs text-stone-500">
+              <MessageSquare className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
+              <p className="font-bold text-stone-800 text-sm">{t('admin.noInquiries', 'No user inquiries yet.')}</p>
+            </div>
+          ) : inquiriesList.map(inquiry => (
+            <div key={inquiry.id} className="bg-white rounded-2xl border border-stone-200 shadow-xs p-5 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-stone-900">{inquiry.inquiryId}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-stone-100 text-stone-700">{inquiry.userRole}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      inquiry.status === 'NEW' ? 'bg-amber-100 text-amber-900' : inquiry.status === 'REPLIED' ? 'bg-emerald-100 text-emerald-900' : 'bg-stone-200 text-stone-800'
+                    }`}>{inquiry.status}</span>
+                  </div>
+                  <p className="font-bold text-stone-900">{inquiry.userName}</p>
+                  <p className="text-[11px] text-stone-500">{t(`inquiry.topic.${inquiry.topic}`, inquiry.topic)} • {new Date(inquiry.createdAt).toLocaleString()}</p>
+                </div>
+                <select
+                  value={inquiry.status}
+                  onChange={e => handleInquiryStatus(inquiry, e.target.value as SupportInquiry['status'])}
+                  disabled={inquirySubmittingId === inquiry.id}
+                  className="px-3 py-2 border border-stone-300 rounded-xl text-xs font-semibold bg-white"
+                >
+                  <option value="NEW">{t('inquiry.status.NEW', 'NEW')}</option>
+                  <option value="REPLIED">{t('inquiry.status.REPLIED', 'REPLIED')}</option>
+                  <option value="RESOLVED">{t('inquiry.status.RESOLVED', 'RESOLVED')}</option>
+                </select>
+              </div>
+
+              <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 text-xs text-stone-700 whitespace-pre-wrap">{inquiry.message}</div>
+
+              {inquiry.adminReply && (
+                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">{t('admin.reply', 'Admin Reply')}</p>
+                  <p className="text-xs text-emerald-950 whitespace-pre-wrap">{inquiry.adminReply}</p>
+                  {inquiry.repliedAt && <p className="text-[10px] text-emerald-700">{new Date(inquiry.repliedAt).toLocaleString()}</p>}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-stone-700">{t('admin.replyToInquiry', 'Reply to Inquiry')}</label>
+                <textarea
+                  rows={3}
+                  value={inquiryReplies[inquiry.id] || ''}
+                  onChange={e => setInquiryReplies(prev => ({ ...prev, [inquiry.id]: e.target.value }))}
+                  placeholder={t('admin.replyPlaceholder', 'Write a reply for the user...')}
+                  className="w-full px-3 py-2.5 border border-stone-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                />
+                <button
+                  onClick={() => handleInquiryReply(inquiry)}
+                  disabled={inquirySubmittingId === inquiry.id || !(inquiryReplies[inquiry.id] || '').trim()}
+                  className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 text-white font-bold text-xs rounded-xl"
+                >
+                  {t('admin.sendReply', 'Send Reply')}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* TAB CONTENT: PAYMENTS */}
       {activeTab === 'payments' && (
         <div className="bg-white rounded-2xl border border-stone-200 shadow-xs overflow-hidden">
           <div className="p-4 border-b border-stone-200 font-bold text-xs text-stone-800 uppercase tracking-wider">
-            {t('admin.paymentNotEnabled', 'Payment integration not enabled in this version')}
+            {t('admin.paymentRecords', 'Payment Records')}
           </div>
           <div className="divide-y divide-stone-100 text-xs">
             {transactionsList.map(transaction => (
@@ -511,11 +614,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-stone-900">{transaction.bookingCode}</span>
                     <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                      {t('admin.verified', 'VERIFIED')}
+                      {transaction.status}
                     </span>
                   </div>
                   <p className="text-stone-500 text-[11px]">
-                    {t('admin.orderLabel', 'Order')}: {transaction.razorpayOrderId} • {t('admin.paymentLabel', 'Payment')}: {transaction.razorpayPaymentId}
+                    {t('admin.rentalId', 'Rental/Booking ID')}: {transaction.bookingCode} • {t('admin.paymentLabel', 'Payment ID')}: {transaction.razorpayPaymentId || t('admin.notAvailable', 'N/A')}
                   </p>
                 </div>
                 <div className="text-right">
@@ -523,7 +626,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     ₹{transaction.amount.toLocaleString('en-IN')}
                   </span>
                   <span className="text-[10px] text-stone-500 block">
-                    {t('admin.ownerNetLabel', 'Owner Net')}: ₹{transaction.ownerNetEarnings} • {t('admin.platformFeeLabel', 'KrishiMitra Platform Fee')}: ₹{transaction.platformFee}
+                    {t('admin.rentalAmount', 'Rental Amount')}: ₹{Number(transaction.totalRentalAmount ?? 0).toLocaleString('en-IN')} • {t('admin.platformFeeLabel', 'Platform Fee')}: ₹{Number(transaction.platformFee ?? 0).toLocaleString('en-IN')} • {t('admin.ownerNetLabel', 'Owner Amount')}: ₹{Number(transaction.ownerNetEarnings ?? 0).toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>

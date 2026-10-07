@@ -1,4 +1,6 @@
 import { calculateBookingPayment } from '../paymentCalculator.js';
+
+const INDIA_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
 export const profileToUser = (p: any) => ({
   id: p.id, name: p.full_name, email: p.email, phone: p.phone ?? '', role: p.role,
   avatarUrl: p.profile_image ?? undefined, state: p.state ?? '', district: p.district ?? '',
@@ -46,6 +48,8 @@ export function bookingToFrontend(b: any) {
     bookingAmount: Number(payment?.booking_amount ?? calc.bookingAmount), remainingRentalAmount: Number(payment?.remaining_rental_amount ?? calc.remainingRentalAmount),
     paymentId: payment?.id, razorpayOrderId: payment?.razorpay_order_id, razorpayPaymentId: payment?.razorpay_payment_id, paidAt: payment?.payment_status === 'PAID' ? payment?.updated_at : undefined, remainingPaymentStatus: payment?.remaining_payment_status, remainingPaymentMethod: payment?.remaining_payment_method, rentalCompletedAt: payment?.rental_completed_at, ownerPaymentConfirmedAt: payment?.owner_payment_confirmed_at,
     ownerNotes: b.owner_note ?? undefined, rejectionReason: b.rejection_reason ?? undefined, cancellationReason: b.cancellation_reason ?? undefined,
+    rentalNotCompleted: b.status === 'CONFIRMED' && String(b.end_date) < INDIA_DATE_FORMATTER.format(new Date()),
+    stoppedBy: b.stopped_by ?? undefined, stopReason: b.stop_reason ?? undefined, stopMessage: b.stop_message ?? undefined, stoppedAt: b.stopped_at ?? undefined,
     pickupAddress: b.pickup_address ?? '', notes: b.farmer_note ?? '', createdAt: b.created_at, updatedAt: b.updated_at
   };
 }

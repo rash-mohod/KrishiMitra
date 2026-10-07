@@ -123,7 +123,7 @@ export const DisputeModal: React.FC<DisputeModalProps> = ({
           </div>
 
           <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800">
-            {t('dispute.escrowNotice', 'Disputes freeze pending escrow settlements until the State Extension Moderator verifies logs with both farmer and equipment owner.')}
+            {t('dispute.paymentRecordsNotice', 'Disputes are reviewed using the booking, payment, and communication records available to the platform.')}
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

@@ -147,6 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
 
             {user && (
               <>
+                {role !== 'ADMIN' && (
                 <button
                   onClick={() => handleNavClick('/messages')}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap flex items-center gap-1.5 ${
@@ -165,6 +166,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
                     </span>
                   )}
                 </button>
+                )}
 
                 <button
                   onClick={() => handleNavClick(getDashboardPath())}
@@ -371,6 +373,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
                       </div>
 
                       <div className="py-1">
+                        {role !== 'ADMIN' && (
                         <button
                           onClick={() =>
                             handleNavClick('/messages')
@@ -394,6 +397,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
                             </span>
                           )}
                         </button>
+                        )}
 
                         <button
                           onClick={() =>
@@ -563,6 +567,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
 
           {user && (
             <>
+              {role !== 'ADMIN' && (
               <button
                 onClick={() => handleNavClick('/messages')}
                 className="w-full text-left px-3 py-2.5 rounded-lg text-base font-bold text-stone-900 hover:bg-emerald-50 hover:text-emerald-900 flex items-center justify-between"
@@ -582,6 +587,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentPath, onNavigate }) => {
                   </span>
                 )}
               </button>
+              )}
 
               <button
                 onClick={() =>

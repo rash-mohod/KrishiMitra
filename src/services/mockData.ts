@@ -877,7 +877,7 @@ export const INITIAL_REVIEWS: Review[] = [
     revieweeId: 'user-owner-2',
     revieweeName: 'Gurpreet Singh Brar',
     rating: 5,
-    comment: 'Harvested 24 acres of wheat in two days. The Preet 987 operator was extremely skilled with zero grain loss. Escrow payment was very smooth and transparent.',
+    comment: 'Harvested 24 acres of wheat in two days. The Preet 987 operator was extremely skilled with zero grain loss. payment was very smooth and transparent.',
     createdAt: '2026-04-18T16:00:00.000Z'
   },
   {
@@ -1004,7 +1004,7 @@ export const INITIAL_CONVERSATIONS: ChatConversation[] = [
         isOnline: true
       }
     ],
-    topic: 'Official Escrow Protection & Mahadbt CHC Subsidy Claim',
+    topic: 'Official Payment Protection & Mahadbt CHC Subsidy Claim',
     lastMessage: 'All digital receipts from Krishi Mitra are GST-compliant and eligible for up to 40% State CHC custom hiring subsidy.',
     lastMessageSenderId: 'user-admin-1',
     lastMessageTime: '2026-08-15T16:20:00.000Z',
@@ -1076,7 +1076,7 @@ export const INITIAL_CONVERSATIONS: ChatConversation[] = [
         isOnline: true
       }
     ],
-    topic: 'Custom Hiring Center Fleet Verification & Escrow Payouts',
+    topic: 'Custom Hiring Center Fleet Verification & Payment Payouts',
     lastMessage: 'RC documents verified! Your equipment is now displayed with the Green Verified Fleet badge.',
     lastMessageSenderId: 'user-admin-1',
     lastMessageTime: '2026-08-12T18:00:00.000Z',
@@ -1157,7 +1157,7 @@ export const INITIAL_MESSAGES: ChatMessage[] = [
     receiverId: 'user-owner-1',
     receiverName: 'Rajesh Patil',
     receiverRole: 'OWNER',
-    content: 'Submitting booking KM-2026-1001 with 100% Escrow Protection right now. Please confirm once visible on your dashboard.',
+    content: 'Submitting booking KM-2026-1001 with 100% Payment Protection right now. Please confirm once visible on your dashboard.',
     createdAt: '2026-08-16T14:15:00.000Z',
     isRead: true
   },

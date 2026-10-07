@@ -133,16 +133,16 @@ async function runTestSuite() {
   }
 
   // ----------------------------------------------------
-  // TEST SUITE 3: PRICING ENGINE & ESCROW CALCULATIONS
+  // TEST SUITE 3: PRICING ENGINE & PAYMENT CALCULATIONS
   // ----------------------------------------------------
-  console.log('\n--- TEST SUITE 3: PRICING ENGINE & ESCROW MATH ---');
+  console.log('\n--- TEST SUITE 3: PRICING ENGINE & PAYMENT MATH ---');
   try {
     const testEq = INITIAL_EQUIPMENT[0]; // e.g. pricePerDay: 2200, operatorCostPerDay: 450
     const priceWithOperator = bookingApi.calculatePrice(testEq, '2026-09-10', '2026-09-12', true); // 3 days
     
     assert(priceWithOperator.durationDays === 3, 'Rental duration calculation (inclusive)');
     assert(priceWithOperator.baseAmount === 3 * testEq.pricePerDay, 'Base amount calculation');
-    assert(priceWithOperator.platformFee === Math.round(priceWithOperator.baseAmount * 0.05), 'Platform 5% escrow commission');
+    assert(priceWithOperator.platformFee === Math.round(priceWithOperator.baseAmount * 0.05), 'Platform 5% payment commission');
     assert(priceWithOperator.operatorAmount === 3 * testEq.operatorCostPerDay, 'Operator fee calculation');
     assert(priceWithOperator.totalAmount === priceWithOperator.baseAmount + priceWithOperator.platformFee + priceWithOperator.operatorAmount, 'Total pricing math integrity');
   } catch (err: any) {
@@ -268,8 +268,8 @@ async function runTestSuite() {
     });
     assert(dispute.status === 'OPEN' && dispute.bookingId === booking.id, 'Dispute filing and admin escalation');
 
-    const resolvedDispute = await adminApi.resolveDispute(dispute.id, 'Escrow refund granted for 1 downtime day.');
-    assert(resolvedDispute.status === 'RESOLVED' && resolvedDispute.adminResponse?.includes('Escrow refund'), 'Admin dispute resolution');
+    const resolvedDispute = await adminApi.resolveDispute(dispute.id, 'Payment refund granted for 1 downtime day.');
+    assert(resolvedDispute.status === 'RESOLVED' && resolvedDispute.adminResponse?.includes('Payment refund'), 'Admin dispute resolution');
 
     const stats = await adminApi.getPlatformStats();
     assert(stats.totalUsers > 0 && stats.totalEquipment > 0, 'Platform analytics and GMV reporting');

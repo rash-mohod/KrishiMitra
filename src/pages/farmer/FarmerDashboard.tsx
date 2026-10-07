@@ -8,6 +8,7 @@ import { BookingDrawer } from '../../components/booking/BookingDrawer';
 import { Avatar } from '../../components/common/Avatar';
 import { ReviewModal } from '../../components/reviews/ReviewModal';
 import { DisputeModal } from '../../components/booking/DisputeModal';
+import { RentalStopModal } from '../../components/booking/RentalStopModal';
 import {
   Calendar,
   CheckCircle2,
@@ -38,6 +39,101 @@ interface FarmerDashboardProps {
 
 const isValidBookingDate = (value?: string) => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
 
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  const raw = value.slice(0, 10);
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(d);
+};
+
+const downloadPaymentReceipt = (txn: PaymentTransaction) => {
+  const pdfEscape = (value: unknown) => String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/[^\x20-\x7E]/g, '');
+
+  const money = (value: unknown) => `INR ${Number(value ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+  const paidAmount = Number(txn.onlinePaymentAmount ?? 0) +
+    (txn.remainingPaymentStatus === 'PAID' ? Number(txn.remainingRentalAmount ?? 0) : 0);
+
+  const rows = [
+    ['Invoice / Booking', txn.bookingCode || txn.bookingId],
+    ['Equipment', txn.equipmentName || 'Equipment'],
+    ['Farmer', txn.userName || '—'],
+    ['Owner', txn.ownerName || '—'],
+    ['Payment date', formatDate(txn.createdAt)],
+    ['Payment method', txn.paymentMethod || '—'],
+    ['Razorpay payment ID', txn.razorpayPaymentId || '—'],
+    ['Rental amount', money(txn.totalRentalAmount)],
+    ['Booking / advance amount', money(txn.bookingAmount)],
+    ['Platform fee', money(txn.platformFee)],
+    ['Remaining rental amount', money(txn.remainingRentalAmount)],
+    ['Remaining payment status', txn.remainingPaymentStatus || '—'],
+    ['Amount paid', money(paidAmount)],
+  ];
+
+  // Dependency-free PDF writer: creates a standard PDF using Helvetica so the
+  // receipt downloads directly as .pdf without adding another npm package.
+  const lines: string[] = [];
+  const addText = (text: string, x: number, y: number, size = 10) => {
+    lines.push(`BT /F1 ${size} Tf ${x} ${y} Td (${pdfEscape(text)}) Tj ET`);
+  };
+
+  addText('KRISHIMITRA', 50, 790, 20);
+  addText('PAYMENT INVOICE / RECEIPT', 50, 765, 13);
+  addText(`Booking: ${txn.bookingCode || txn.bookingId}`, 50, 742, 10);
+  addText(`Invoice date: ${formatDate(txn.createdAt)}`, 390, 742, 10);
+
+  let y = 710;
+  rows.forEach(([label, value], index) => {
+    if (index === rows.length - 1) {
+      lines.push(`0.92 g 45 ${y + 17} 502 1 re f 0 g`);
+    }
+    addText(label, 55, y, index === rows.length - 1 ? 11 : 10);
+    addText(value, 260, y, index === rows.length - 1 ? 11 : 10);
+    y -= 30;
+  });
+
+  addText('This invoice is generated from the KrishiMitra payment record.', 50, 300, 9);
+  addText('Keep this invoice for your rental/payment records.', 50, 285, 9);
+
+  const content = lines.join('\n');
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+
+  let pdf = '%PDF-1.4\n';
+  const offsets: number[] = [0];
+  objects.forEach((obj, index) => {
+    offsets[index + 1] = pdf.length;
+    pdf += `${index + 1} 0 obj\n${obj}\nendobj\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach(offset => {
+    pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+
+  const blob = new Blob([pdf], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `KrishiMitra-Invoice-${txn.bookingCode || txn.id}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};;
+
 export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   initialTab = 'bookings',
   onNavigate,
@@ -55,6 +151,9 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [disputeModalOpen, setDisputeModalOpen] = useState(false);
+  const [stopRentalBookingId, setStopRentalBookingId] = useState<string | null>(null);
+  const [actionSubmitting, setActionSubmitting] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -103,9 +202,24 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
     try {
       await paymentApi.requestRemainingCashPayment(bookingId);
       await loadFarmerData();
-      alert('Cash payment request sent to the equipment owner. Pay the owner directly and wait for confirmation.');
+      setActionMessage(t('rentalPayment.cashRequested', 'Cash payment request sent to the equipment owner. Pay the owner directly and wait for confirmation.'));
     } catch (err: any) {
-      alert(err?.message || 'Unable to request cash payment.');
+      setActionMessage(err?.message || t('rentalPayment.cashRequestFailed', 'Unable to request cash payment.'));
+    }
+  };
+
+  const handleStopRental = async (bookingId: string, reason: string, message?: string) => {
+    if (!user) return;
+    try {
+      setActionSubmitting(true);
+      await bookingApi.stopRental(bookingId, user.id, reason, message);
+      await loadFarmerData();
+      setStopRentalBookingId(null);
+      setDrawerOpen(false);
+    } catch (err: any) {
+      setActionMessage(err?.message || t('rentalStop.failed', 'Unable to stop rental.'));
+    } finally {
+      setActionSubmitting(false);
     }
   };
 
@@ -137,23 +251,10 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
     }
   };
 
-  const handleChatWithAdmin = async () => {
-    if (!user) return;
-    try {
-      const conv = await chatApi.getOrCreateConversation({
-        currentUserId: user.id,
-        targetUserId: 'user-admin-1',
-        type: 'ADMIN_RENTER',
-        topic: 'Official Escrow Protection & Mahadbt CHC Subsidy Claim'
-      });
-      onNavigate(`/messages?id=${conv.id}`);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // Metrics
-  const totalSpent = transactions.filter(t => t.status === 'PAID').reduce((sum, t) => sum + t.amount, 0);
+  const totalSpent = transactions
+    .filter(txn => txn.status === 'PAID' || txn.status === 'SUCCESS')
+    .reduce((sum, txn) => sum + Math.max(0, Number(txn.amount ?? 0)), 0);
   const activeRentalsCount = bookings.filter(b => b.status === 'ACTIVE').length;
   const pendingPaymentCount = bookings.filter(b => b.status === 'PAYMENT_PENDING').length;
 
@@ -184,12 +285,11 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
 
         <div className="flex items-center gap-3">
           <button
-            onClick={handleChatWithAdmin}
+            onClick={() => onNavigate('/contact')}
             className="px-3.5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
-            title="Chat with Krishi Mitra Support & Escrow Arbitrator"
           >
             <MessageSquare className="w-4 h-4 text-amber-400" />
-            <span>{t('chat.adminSupport', 'Agri Support Desk')}</span>
+            <span>{t('support.agriDesk', 'Agri Support Desk')}</span>
           </button>
           <button
             onClick={() => onNavigate('/equipment')}
@@ -253,7 +353,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           <div className="text-2xl font-black text-stone-900 font-display">
             ₹{totalSpent.toLocaleString('en-IN')}
           </div>
-          <span className="text-[11px] text-emerald-700 font-semibold">{t('trust.escrowProtected', '100% Escrow Protected')}</span>
+          <span className="text-[11px] text-emerald-700 font-semibold">{t('dash.paymentTracking', 'Transparent payment tracking & receipts')}</span>
         </div>
       </div>
 
@@ -317,7 +417,9 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-stone-400 font-mono">#{b.bookingCode}</span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          (b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED'
+                          b.rentalNotCompleted
+                            ? 'bg-amber-100 text-amber-900'
+                            : (b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED'
                             ? 'bg-blue-100 text-blue-900'
                             : b.status === 'CONFIRMED' || b.status === 'ACTIVE'
                             ? 'bg-emerald-100 text-emerald-800'
@@ -325,7 +427,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                             ? 'bg-amber-100 text-amber-900'
                             : 'bg-stone-100 text-stone-700'
                         }`}>
-                          {(b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED' ? t('status.completed', 'Rental Completed') : (!isValidBookingDate(b.startDate) || !isValidBookingDate(b.endDate)) ? t('status.datesUnavailable', 'Rental Dates Unavailable') : b.status === 'ACTIVE' ? t('status.active', 'Rental In Progress') : translateStatus(b.status)}
+                          {b.rentalNotCompleted ? t('status.rentalNotCompleted', 'Rental Not Completed') : ((b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED') ? t('status.completed', 'Rental Completed') : (!isValidBookingDate(b.startDate) || !isValidBookingDate(b.endDate)) ? t('status.datesUnavailable', 'Rental Dates Unavailable') : b.status === 'ACTIVE' ? t('status.active', 'Rental In Progress') : translateStatus(b.status)}
                         </span>
                       </div>
                       <h4
@@ -335,7 +437,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                         {b.equipmentName}
                       </h4>
                       <p className="text-xs text-stone-500 flex items-center gap-2">
-                        <span>{isValidBookingDate(b.startDate) && isValidBookingDate(b.endDate) ? `${b.startDate} to ${b.endDate} (${b.durationDays} ${t('common.perDay', 'days')})` : t('status.datesUnavailable', 'Rental dates unavailable')}</span>
+                        <span>{isValidBookingDate(b.startDate) && isValidBookingDate(b.endDate) ? `${formatDate(b.startDate)} to ${formatDate(b.endDate)} (${b.durationDays} ${t('common.perDay', 'days')})` : t('status.datesUnavailable', 'Rental dates unavailable')}</span>
                         <span>•</span>
                         <span>{t('common.owner', 'Owner')}: {b.ownerName}</span>
                       </p>
@@ -367,13 +469,13 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                         </button>
                       )}
 
-                      {b.rentalCompletedAt && Number(b.remainingRentalAmount ?? 0) > 0 && b.remainingPaymentStatus !== 'PAID' && b.remainingPaymentMethod !== 'CASH' && (
+                      {b.status === 'ACTIVE' && Number(b.remainingRentalAmount ?? 0) > 0 && b.remainingPaymentStatus !== 'PAID' && b.remainingPaymentMethod !== 'CASH' && (
                         <>
                           <button
                             onClick={() => handlePayRemainingOnline(b.id)}
                             className="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold"
                           >
-                            {t('dash.payRemainingOnline', 'Pay Remaining Online')} ₹{Number(b.remainingRentalAmount ?? 0).toLocaleString('en-IN')}
+                            {t('dash.payRemainingOnline', 'Pay Remaining Online / UPI')} ₹{Number(b.remainingRentalAmount ?? 0).toLocaleString('en-IN')}
                           </button>
                           <button
                             type="button"
@@ -385,16 +487,22 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                         </>
                       )}
 
-                      {b.rentalCompletedAt && Number(b.remainingRentalAmount ?? 0) > 0 && b.remainingPaymentStatus !== 'PAID' && b.remainingPaymentMethod === 'CASH' && (
+                      {b.status === 'ACTIVE' && Number(b.remainingRentalAmount ?? 0) > 0 && b.remainingPaymentStatus !== 'PAID' && b.remainingPaymentMethod === 'CASH' && (
                         <span className="px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold">
                           {t('dash.cashAwaitingOwner', 'Cash Payment Awaiting Owner Confirmation')}
                         </span>
                       )}
 
-                      {b.rentalCompletedAt && (Number(b.remainingRentalAmount ?? 0) <= 0 || b.remainingPaymentStatus === 'PAID') && (
+                      {b.status === 'ACTIVE' && (Number(b.remainingRentalAmount ?? 0) <= 0 || b.remainingPaymentStatus === 'PAID') && (
                         <span className="px-3 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold">
                           {t('dash.paymentCompleted', 'Payment Completed')}
                         </span>
+                      )}
+
+                      {b.status === 'ACTIVE' && (
+                        <button onClick={() => setStopRentalBookingId(b.id)} className="px-3 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-800 rounded-xl text-xs font-bold">
+                          {t('rentalStop.confirm', 'Stop Rental')}
+                        </button>
                       )}
 
                       {b.status === 'COMPLETED' && (
@@ -443,17 +551,20 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                   <th className="p-3.5">{t('table.invoice', 'Invoice #')}</th>
                   <th className="p-3.5">{t('table.date', 'Date')}</th>
                   <th className="p-3.5">{t('table.equipment', 'Equipment')}</th>
+                  <th className="p-3.5">{t('table.owner', 'Owner')}</th>
                   <th className="p-3.5">{t('table.method', 'Method')}</th>
                   <th className="p-3.5">{t('table.amount', 'Amount (₹)')}</th>
                   <th className="p-3.5">{t('table.status', 'Status')}</th>
+                  <th className="p-3.5">{t('table.receipt', 'Receipt')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {transactions.map(txn => (
                   <tr key={txn.id} className="hover:bg-stone-50/50">
                     <td className="p-3.5 font-mono text-stone-800 font-bold">{(txn as any).invoiceNumber || txn.razorpayPaymentId || txn.id?.slice(0, 10) || txn.id}</td>
-                    <td className="p-3.5 text-stone-500">{new Date(txn.createdAt).toLocaleDateString()}</td>
-                    <td className="p-3.5 font-semibold text-stone-900">{txn.bookingId}</td>
+                    <td className="p-3.5 text-stone-500">{formatDate(txn.createdAt)}</td>
+                    <td className="p-3.5 font-semibold text-stone-900">{txn.equipmentName || txn.bookingCode || txn.bookingId}</td>
+                    <td className="p-3.5 text-stone-600">{txn.ownerName || '—'}</td>
                     <td className="p-3.5 text-stone-600">{txn.paymentMethod}</td>
                     <td className="p-3.5 font-bold text-stone-900">₹{txn.amount.toLocaleString('en-IN')}</td>
                     <td className="p-3.5">
@@ -461,6 +572,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
                         {txn.status}
                       </span>
                     </td>
+                    <td className="p-3.5"><button type="button" onClick={() => downloadPaymentReceipt(txn)} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-900 text-white font-bold hover:bg-stone-700"><Download className="w-3.5 h-3.5" />{t('common.download','Download')}</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -477,6 +589,7 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           userRole="FARMER"
           onClose={() => setDrawerOpen(false)}
           onCancelBooking={(reason) => handleCancelBooking(selectedBooking.id, reason)}
+          onStopRental={() => setStopRentalBookingId(selectedBooking.id)}
           onRaiseDispute={() => {
             setDrawerOpen(false);
             setDisputeModalOpen(true);
@@ -487,6 +600,19 @@ export const FarmerDashboard: React.FC<FarmerDashboardProps> = ({
           }}
           onRefresh={loadFarmerData}
         />
+      )}
+
+      {actionMessage && (
+        <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white max-w-md w-full rounded-2xl shadow-2xl p-6 space-y-4">
+            <h3 className="font-bold text-stone-900">{t('common.notice', 'Notice')}</h3>
+            <p className="text-sm text-stone-600 whitespace-pre-line">{actionMessage}</p>
+            <div className="flex justify-end"><button onClick={() => setActionMessage('')} className="px-4 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold">{t('common.close', 'Close')}</button></div>
+          </div>
+        </div>
+      )}
+      {stopRentalBookingId && (
+        <RentalStopModal isOpen={!!stopRentalBookingId} submitting={actionSubmitting} onClose={() => !actionSubmitting && setStopRentalBookingId(null)} onSubmit={(reason, message) => handleStopRental(stopRentalBookingId, reason, message)} />
       )}
 
       {/* Review Modal */}

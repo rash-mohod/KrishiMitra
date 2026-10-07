@@ -2,37 +2,67 @@
 
 ## Scope
 
-This update was based on the supplied KrishiMitra codebase and the supplied senior-engineering requirements. Existing authentication, booking, and Razorpay payment architecture were preserved while targeted marketplace, profile, avatar, availability, and chat improvements were applied.
+This update was built directly on the supplied `KrishiMitra_clean_final(1).zip` source of truth. The current Booking, Rental, Razorpay, Payment, Authentication, and multilingual implementations were preserved and the requested support/admin changes were layered on top.
 
-## Verified in this environment
+## Preserved current Booking & Payment implementation
 
-- Frontend TypeScript check: **PASS** (`npm run lint`)
-- Backend TypeScript build: **PASS** (`npm --prefix server run build`)
-- Payment source review: existing Razorpay order creation, checkout verification, signature verification, webhook handling, and payment records were retained.
-- Database overlap protection migration created: `server/supabase-stability-migration.sql`
-- Profile photo migration retained and continues to clear legacy Unsplash profile images.
-- Marketplace filters now support State → District → Village/Tehsil and inclusive date availability checks.
-- Voice search uses the browser Speech Recognition API with permission/unsupported-browser handling.
-- Chat now has an authenticated SSE realtime transport with automatic reconnect while retaining REST message operations.
-- Owner-to-owner messaging restrictions remain enforced in both frontend and backend.
-- Home page calculator now uses cost/day × rental days.
-- Unsupported KYC/Aadhaar/land-record claims were removed from the affected UI.
-- Demo profile-photo fallbacks were removed from dashboard/chat/avatar rendering; blank neutral avatars are used when no real photo exists.
+The following current implementation files were byte-for-byte unchanged from the uploaded baseline:
 
-## Build limitation
+- `server/src/routes/bookings.ts`
+- `server/src/routes/payments.ts`
+- `server/src/paymentCalculator.ts`
+- `server/src/razorpay.ts`
+- `src/components/booking/BookingDrawer.tsx`
+- `src/components/booking/RentalStopModal.tsx`
+- `src/components/booking/BookingRejectModal.tsx`
 
-A complete Vite production build could not be executed in this Linux validation environment because the supplied `node_modules` tree is missing Rollup's platform-specific optional package `@rollup/rollup-linux-x64-gnu`. Attempts to install the missing optional package were blocked by the environment's package-install timeout. This is an environment/dependency packaging issue, not a reported TypeScript error.
+The existing Razorpay order creation, signature verification, webhook handling, remaining-rental payment flow, platform-fee calculation, and booking/rental lifecycle were not replaced.
 
-The backend production TypeScript build did complete successfully.
+## Implemented in this update
 
-## Payment regression testing
+- Removed Farmer/Owner direct administrator chat entry points.
+- Kept legitimate Farmer ↔ Owner rental communication.
+- Agri Support Desk now navigates to `/contact` instead of opening a chat.
+- Added authenticated Farmer/Owner support inquiries backed by `support_inquiries`.
+- Added Admin User Inquiries dashboard with reply and status management.
+- Added user-side inquiry history and administrator replies.
+- Admin accounts cannot create inquiries.
+- Admin accounts are blocked from Farmer/Owner dashboards and the messaging UI.
+- Backend chat creation/access rejects conversations involving ADMIN accounts.
+- Removed escrow terminology and obsolete payment-integration-disabled messaging.
+- Admin Payment Records now use the current `payments` records.
+- Admin Total GMV is calculated from successful current payment records and excludes rejected/cancelled/expired bookings.
+- Admin Platform Revenue sums the stored `platform_fee` from successful current payment records; no new fee formula was introduced.
+- Admin dashboard cards continue to use live database counts.
+- New Contact, Inquiry, Admin Inquiry, and Payment Record strings use the existing `LanguageContext` translation architecture.
 
-No live Razorpay transaction was executed in this validation environment. The existing payment implementation was inspected and intentionally left intact. Local Test Mode payment testing should be repeated after extraction using the project's existing Razorpay test credentials/configuration.
+## Database changes
+
+New incremental migration:
+
+`server/supabase-support-inquiries-migration.sql`
+
+It creates `public.support_inquiries`, status/topic constraints, indexes, timestamps, and user read/insert RLS policies. Admin read/reply operations use the existing server-side Supabase service-role client after explicit ADMIN authorization.
+
+`server/supabase-schema.sql` was also updated to document the new table.
+
+## Validation completed
+
+- All 80 TypeScript/TSX source files parsed successfully with the TypeScript compiler parser: **PASS**.
+- `src/i18n/translations.ts` standalone TypeScript check: **PASS**.
+- Static acceptance checks for inquiry routes, admin restrictions, escrow removal, and obsolete admin-chat strings: **PASS**.
+- Core current Booking/Payment implementation preservation comparison: **PASS**.
+
+## Environment limitation
+
+A full dependency-backed frontend/Vite build could not be executed because this supplied project has no `node_modules` directory and package installation is unavailable in the validation environment. `npm ci --offline` confirmed the required package tarballs are not cached, and the online install attempt timed out.
+
+Therefore this report does **not** claim a full production Vite build passed.
 
 ## Supabase action required
 
-Run the existing profile/payment migrations if they have not already been applied, then run:
+Before using the new inquiry workflow against the real database, run:
 
-`server/supabase-stability-migration.sql`
+`server/supabase-support-inquiries-migration.sql`
 
-Do not copy any `.env` file from a development machine into source control or the final deployment package.
+Do not commit `.env` or `server/.env` files or expose their credentials.

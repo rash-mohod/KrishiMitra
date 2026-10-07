@@ -1,4 +1,4 @@
-import { Booking, Category, ChatConversation, ChatMessage, Dispute, Equipment, EquipmentFilterParams, MessageReport, Notification, PaymentTransaction, Review, User, UserRole } from '../types';
+import { Booking, Category, ChatConversation, ChatMessage, Dispute, Equipment, EquipmentFilterParams, MessageReport, Notification, PaymentTransaction, Review, SupportInquiry, User, UserRole } from '../types';
 
 const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/$/, '');
 const TOKEN_KEY = 'km_auth_token';
@@ -242,6 +242,7 @@ export const bookingApi={
  async rejectBooking(id:string,_ownerId:string,reason:string){return (await request<{booking:Booking}>(`/bookings/${enc(id)}/reject`,{method:'PATCH',body:JSON.stringify({reason})})).booking},
  async cancelBooking(id:string,_userId:string,reason:string){return (await request<{booking:Booking}>(`/bookings/${enc(id)}/cancel`,{method:'PATCH',body:JSON.stringify({reason})})).booking},
  async startRental(id:string,_ownerId:string){return (await request<{booking:Booking}>(`/bookings/${enc(id)}/start`,{method:'PATCH'})).booking},
+ async stopRental(id:string,_userId:string,reason:string,message?:string){return (await request<{booking:Booking}>(`/bookings/${enc(id)}/stop`,{method:'PATCH',body:JSON.stringify({reason,message})})).booking},
  async rentalCompleted(id:string,_farmerId:string){return (await request<{booking:Booking}>(`/bookings/${enc(id)}/rental-completed`,{method:'POST'})).booking},
  async completeRental(id:string,_ownerId:string){return (await request<{booking:Booking}>(`/bookings/${enc(id)}/complete`,{method:'PATCH'})).booking}
 };
@@ -274,6 +275,22 @@ export const favoritesApi={
  async getFavorites(){return (await request<{favorites:string[]}>('/favorites')).favorites},
  async toggleFavorite(id:string){return (await request<{isFavorite:boolean}>(`/favorites/${enc(id)}/toggle`,{method:'POST'})).isFavorite}
 };
+
+export const inquiryApi = {
+  async create(topic: string, message: string) {
+    return (await request<{ inquiry: SupportInquiry }>('/inquiries', { method: 'POST', body: JSON.stringify({ topic, message }) })).inquiry;
+  },
+  async getMine() {
+    return (await request<{ inquiries: SupportInquiry[] }>('/inquiries/my')).inquiries;
+  },
+  async getAll() {
+    return (await request<{ inquiries: SupportInquiry[] }>('/inquiries/admin')).inquiries;
+  },
+  async update(id: string, payload: { reply?: string; status?: SupportInquiry['status'] }) {
+    return (await request<{ inquiry: SupportInquiry }>(`/inquiries/admin/${enc(id)}`, { method: 'PATCH', body: JSON.stringify(payload) })).inquiry;
+  }
+};
+
 export const adminApi={
  async approveEquipment(id:string){return (await request<{equipment:Equipment}>(`/admin/equipment/${enc(id)}/approve`,{method:'PATCH'})).equipment},
  async rejectEquipment(id:string,reason:string){return (await request<{equipment:Equipment}>(`/admin/equipment/${enc(id)}/reject`,{method:'PATCH',body:JSON.stringify({reason})})).equipment},

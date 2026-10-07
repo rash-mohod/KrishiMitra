@@ -6,14 +6,14 @@ export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export type BookingStatus =
   | 'PENDING'
-  | 'ACCEPTED'
   | 'PAYMENT_PENDING'
   | 'CONFIRMED'
   | 'ACTIVE'
-  | 'RETURNED'
   | 'COMPLETED'
   | 'REJECTED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'STOPPED';
 
 export type PaymentStatus = 'CREATED' | 'PENDING' | 'ORDER_CREATED' | 'PAID' | 'SUCCESS' | 'FAILED' | 'REFUNDED' | 'PARTIALLY_REFUNDED' | 'VERIFICATION_FAILED';
 export type PaymentMethod = 'RAZORPAY' | 'RAZORPAY_UPI' | 'RAZORPAY_CARD' | 'RAZORPAY_NETBANKING' | 'CASH' | 'UPI' | 'CASH_ON_DELIVERY';
@@ -83,6 +83,7 @@ export interface Equipment {
   totalRentals: number;
   createdAt: string;
   isFeatured?: boolean;
+  isActive?: boolean;
 }
 
 export interface Booking {
@@ -120,6 +121,11 @@ export interface Booking {
   remainingPaymentMethod?: 'CASH' | 'RAZORPAY' | 'UPI';
   rentalCompletedAt?: string;
   ownerPaymentConfirmedAt?: string;
+  rentalNotCompleted?: boolean;
+  stoppedBy?: UserRole;
+  stopReason?: string;
+  stopMessage?: string;
+  stoppedAt?: string;
   paymentId?: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
@@ -133,10 +139,28 @@ export interface Booking {
   updatedAt: string;
 }
 
+export interface SupportInquiry {
+  id: string;
+  inquiryId: string;
+  userId: string;
+  userName: string;
+  userRole: 'FARMER' | 'OWNER';
+  topic: string;
+  message: string;
+  status: 'NEW' | 'REPLIED' | 'RESOLVED';
+  adminReply?: string;
+  repliedBy?: string;
+  repliedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface PaymentTransaction {
   id: string;
   bookingId: string;
   bookingCode: string;
+  equipmentId?: string;
+  equipmentName?: string;
   userId: string;
   userName: string;
   userRole: UserRole;
@@ -152,6 +176,15 @@ export interface PaymentTransaction {
   razorpayPaymentId?: string;
   razorpaySignature?: string;
   createdAt: string;
+  totalRentalAmount?: number;
+  bookingAmount?: number;
+  onlinePaymentAmount?: number;
+  remainingRentalAmount?: number;
+  remainingPaymentStatus?: 'PENDING' | 'PAID' | 'NOT_REQUIRED';
+  remainingPaymentMethod?: 'CASH' | 'UPI' | 'RAZORPAY';
+  rentalCompletedAt?: string;
+  ownerPaymentConfirmedAt?: string;
+  gatewayError?: string;
 }
 
 export interface Review {

@@ -7,6 +7,8 @@ import { AddEquipmentModal } from '../../components/owner/AddEquipmentModal';
 import { Avatar } from '../../components/common/Avatar';
 import { BookingDrawer } from '../../components/booking/BookingDrawer';
 import { DisputeModal } from '../../components/booking/DisputeModal';
+import { RentalStopModal } from '../../components/booking/RentalStopModal';
+import { BookingRejectModal } from '../../components/booking/BookingRejectModal';
 import {
   AlertTriangle,
   Calendar,
@@ -32,6 +34,101 @@ import {
 
 const INDIA_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
 const isValidBookingDate = (value?: string) => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
+
+const formatDate = (value?: string) => {
+  if (!value) return '—';
+  const raw = value.slice(0, 10);
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(d);
+};
+
+const downloadPaymentReceipt = (txn: PaymentTransaction) => {
+  const pdfEscape = (value: unknown) => String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/[^\x20-\x7E]/g, '');
+
+  const money = (value: unknown) => `INR ${Number(value ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+  const paidAmount = Number(txn.onlinePaymentAmount ?? 0) +
+    (txn.remainingPaymentStatus === 'PAID' ? Number(txn.remainingRentalAmount ?? 0) : 0);
+
+  const rows = [
+    ['Invoice / Booking', txn.bookingCode || txn.bookingId],
+    ['Equipment', txn.equipmentName || 'Equipment'],
+    ['Farmer', txn.userName || '—'],
+    ['Owner', txn.ownerName || '—'],
+    ['Payment date', formatDate(txn.createdAt)],
+    ['Payment method', txn.paymentMethod || '—'],
+    ['Razorpay payment ID', txn.razorpayPaymentId || '—'],
+    ['Rental amount', money(txn.totalRentalAmount)],
+    ['Booking / advance amount', money(txn.bookingAmount)],
+    ['Platform fee', money(txn.platformFee)],
+    ['Remaining rental amount', money(txn.remainingRentalAmount)],
+    ['Remaining payment status', txn.remainingPaymentStatus || '—'],
+    ['Amount paid', money(paidAmount)],
+  ];
+
+  // Dependency-free PDF writer: creates a standard PDF using Helvetica so the
+  // receipt downloads directly as .pdf without adding another npm package.
+  const lines: string[] = [];
+  const addText = (text: string, x: number, y: number, size = 10) => {
+    lines.push(`BT /F1 ${size} Tf ${x} ${y} Td (${pdfEscape(text)}) Tj ET`);
+  };
+
+  addText('KRISHIMITRA', 50, 790, 20);
+  addText('PAYMENT INVOICE / RECEIPT', 50, 765, 13);
+  addText(`Booking: ${txn.bookingCode || txn.bookingId}`, 50, 742, 10);
+  addText(`Invoice date: ${formatDate(txn.createdAt)}`, 390, 742, 10);
+
+  let y = 710;
+  rows.forEach(([label, value], index) => {
+    if (index === rows.length - 1) {
+      lines.push(`0.92 g 45 ${y + 17} 502 1 re f 0 g`);
+    }
+    addText(label, 55, y, index === rows.length - 1 ? 11 : 10);
+    addText(value, 260, y, index === rows.length - 1 ? 11 : 10);
+    y -= 30;
+  });
+
+  addText('This invoice is generated from the KrishiMitra payment record.', 50, 300, 9);
+  addText('Keep this invoice for your rental/payment records.', 50, 285, 9);
+
+  const content = lines.join('\n');
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+
+  let pdf = '%PDF-1.4\n';
+  const offsets: number[] = [0];
+  objects.forEach((obj, index) => {
+    offsets[index + 1] = pdf.length;
+    pdf += `${index + 1} 0 obj\n${obj}\nendobj\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach(offset => {
+    pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+
+  const blob = new Blob([pdf], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `KrishiMitra-Invoice-${txn.bookingCode || txn.id}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};;
 
 interface OwnerDashboardProps {
   initialTab?: string;
@@ -64,6 +161,10 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [disputeModalOpen, setDisputeModalOpen] = useState(false);
+  const [stopRentalBookingId, setStopRentalBookingId] = useState<string | null>(null);
+  const [rejectBookingId, setRejectBookingId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState('');
+  const [actionSubmitting, setActionSubmitting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -129,11 +230,12 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
   const handleAcceptBooking = async (bookingId: string) => {
     if (!user) return;
-    await bookingApi.acceptBooking(bookingId, user.id);
-    loadOwnerData();
-    if (selectedBooking) {
-      const updated = bookings.find(b => b.id === bookingId);
-      if (updated) setSelectedBooking(updated);
+    try {
+      await bookingApi.acceptBooking(bookingId, user.id);
+      await loadOwnerData();
+      setDrawerOpen(false);
+    } catch (err: any) {
+      setActionMessage(err?.message || t('booking.acceptFailed', 'Unable to accept this booking.'));
     }
   };
 
@@ -141,18 +243,25 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
     try {
       await paymentApi.confirmRemainingPayment(bookingId, method);
       await loadOwnerData();
-      alert(`Remaining ${method} payment confirmed.`);
+      setActionMessage(t('rentalPayment.confirmed', `Remaining ${method} payment confirmed.`));
     } catch (err: any) {
-      alert(err?.message || 'Unable to confirm payment.');
+      setActionMessage(err?.message || t('rentalPayment.confirmFailed', 'Unable to confirm payment.'));
     }
   };
 
   const handleStartRental = async (bookingId: string) => {
+    if (!user) return;
+    const booking = bookings.find(item => item.id === bookingId);
+    const today = INDIA_DATE_FORMATTER.format(new Date());
+    if (booking && isValidBookingDate(booking.startDate) && booking.startDate > today) {
+      setActionMessage(`${t('rentalStart.notYet', 'Rental cannot be started yet.')}\n${t('rentalStart.startsOn', 'This rental starts on')} ${booking.startDate}.`);
+      return;
+    }
     try {
-      await bookingApi.startRental(bookingId, user!.id);
+      await bookingApi.startRental(bookingId, user.id);
       await loadOwnerData();
     } catch (err: any) {
-      alert(err?.message || 'Unable to start rental.');
+      setActionMessage(err?.message || t('rentalStart.unable', 'Unable to start rental.'));
     }
   };
 
@@ -165,10 +274,34 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
     }
   };
 
-  const handleRejectBooking = async (bookingId: string) => {
+  const handleRejectBooking = async (bookingId: string, reason: string) => {
     if (!user) return;
-    await bookingApi.rejectBooking(bookingId, user.id, 'Machinery unavailable on specified dates');
-    loadOwnerData();
+    try {
+      setActionSubmitting(true);
+      await bookingApi.rejectBooking(bookingId, user.id, reason);
+      await loadOwnerData();
+      setRejectBookingId(null);
+      setDrawerOpen(false);
+    } catch (err: any) {
+      setActionMessage(err?.message || t('booking.rejectFailed', 'Unable to reject this booking.'));
+    } finally {
+      setActionSubmitting(false);
+    }
+  };
+
+  const handleStopRental = async (bookingId: string, reason: string, message?: string) => {
+    if (!user) return;
+    try {
+      setActionSubmitting(true);
+      await bookingApi.stopRental(bookingId, user.id, reason, message);
+      await loadOwnerData();
+      setStopRentalBookingId(null);
+      setDrawerOpen(false);
+    } catch (err: any) {
+      setActionMessage(err?.message || t('rentalStop.failed', 'Unable to stop rental.'));
+    } finally {
+      setActionSubmitting(false);
+    }
   };
 
   const handleChatWithFarmer = async (b: Booking) => {
@@ -192,23 +325,10 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
     }
   };
 
-  const handleChatWithAdmin = async () => {
-    if (!user) return;
-    try {
-      const conv = await chatApi.getOrCreateConversation({
-        currentUserId: user.id,
-        targetUserId: 'user-admin-1',
-        type: 'ADMIN_RENTER',
-        topic: 'Owner KYC Verification & Fast Payout Clearance'
-      });
-      onNavigate(`/messages?id=${conv.id}`);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   // Metrics
-  const totalEarnings = transactions.filter(t => t.status === 'PAID').reduce((sum, t) => sum + t.amount, 0);
+  const totalEarnings = transactions
+    .filter(txn => txn.status === 'PAID' || txn.status === 'SUCCESS')
+    .reduce((sum, txn) => sum + Math.max(0, Number(txn.ownerNetEarnings ?? 0)), 0);
   const pendingRequests = bookings.filter(b => b.status === 'PENDING').length;
   const activeRentals = bookings.filter(b => b.status === 'ACTIVE' || b.status === 'CONFIRMED').length;
 
@@ -239,12 +359,11 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
         <div className="flex items-center gap-3">
           <button
-            onClick={handleChatWithAdmin}
+            onClick={() => onNavigate('/contact')}
             className="px-3.5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
-            title="Chat with Agri Support & KYC Verification Officers"
           >
             <MessageSquare className="w-4 h-4 text-amber-400" />
-            <span>{t('chat.adminSupport', 'Agri Support Desk')}</span>
+            <span>{t('support.agriDesk', 'Agri Support Desk')}</span>
           </button>
           <button
             onClick={openAddEquipmentModal}
@@ -480,7 +599,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-stone-400 font-mono">#{b.bookingCode}</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      ((b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED')
+                      b.rentalNotCompleted
+                        ? 'bg-amber-100 text-amber-900'
+                        : ((b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED')
                         ? 'bg-blue-100 text-blue-900'
                         : b.status === 'PENDING'
                         ? 'bg-amber-100 text-amber-900 font-extrabold'
@@ -488,26 +609,22 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                         ? 'bg-emerald-100 text-emerald-800'
                         : 'bg-stone-100 text-stone-700'
                     }`}>
-                      {((b.status === 'ACTIVE' && b.rentalCompletedAt) || b.status === 'COMPLETED')
-                        ? 'Rental Completed'
-                        : (b.status === 'CONFIRMED' && (!isValidBookingDate(b.startDate) || !isValidBookingDate(b.endDate)))
-                        ? 'Rental Not Completed'
-                        : b.status === 'CONFIRMED' && isValidBookingDate(b.startDate) && isValidBookingDate(b.endDate) && b.endDate < INDIA_DATE_FORMATTER.format(new Date())
-                        ? 'Rental Not Completed'
+                      {b.rentalNotCompleted
+                        ? t('status.rentalNotCompleted', 'Rental Not Completed')
                         : translateStatus(b.status)}
                     </span>
                   </div>
                   <h4 className="font-bold text-stone-900 text-sm">{b.equipmentName}</h4>
                   <p className="text-xs text-stone-600">
-                    <strong>Farmer:</strong> {b.farmerName} ({b.farmerPhone}) • {isValidBookingDate(b.startDate) && isValidBookingDate(b.endDate) ? `${b.startDate} to ${b.endDate}` : 'Rental dates unavailable'}
+                    <strong>Farmer:</strong> {b.farmerName} ({b.farmerPhone}) • {isValidBookingDate(b.startDate) && isValidBookingDate(b.endDate) ? `${formatDate(b.startDate)} to ${formatDate(b.endDate)}` : 'Rental dates unavailable'}
                   </p>
                   <p className="text-xs text-stone-500"><strong>Farm Address:</strong> {b.pickupAddress}</p>
                 </div>
 
                 <div className="flex items-center justify-between md:justify-end gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-stone-100">
                   <div className="text-left md:text-right">
-                    <span className="text-[10px] text-stone-400 block">Total Payout</span>
-                    <span className="font-bold text-emerald-800 text-sm">₹{b.totalAmount.toLocaleString('en-IN')}</span>
+                    <span className="text-[10px] text-stone-400 block">{t('dash.totalPayout', 'Total Payout')}</span>
+                    <span className="font-bold text-emerald-800 text-sm">₹{(b.paymentStatus === 'PAID' ? Number(b.bookingAmount ?? 0) + (b.remainingPaymentStatus === 'PAID' ? Number(b.remainingRentalAmount ?? 0) : 0) : 0).toLocaleString('en-IN')}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -521,31 +638,29 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                     </button>
 
                     {b.status === 'CONFIRMED' && (
-                      !isValidBookingDate(b.startDate) || !isValidBookingDate(b.endDate) ? (
-                        <span className="px-3 py-2 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold">Rental not completed — dates unavailable</span>
-                      ) : b.endDate < INDIA_DATE_FORMATTER.format(new Date()) ? (
-                        <span className="px-3 py-2 bg-stone-100 text-stone-700 border border-stone-200 rounded-xl text-xs font-bold">Rental not completed</span>
+                      b.rentalNotCompleted ? (
+                        <span className="px-3 py-2 bg-stone-100 text-stone-700 border border-stone-200 rounded-xl text-xs font-bold">{t('status.rentalNotCompleted', 'Rental Not Completed')}</span>
                       ) : (
-                        <button onClick={() => handleStartRental(b.id)} className="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold">Start Rental</button>
+                        <button onClick={() => handleStartRental(b.id)} className="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold">{t('rentalStart.start', 'Start Rental')}</button>
                       )
                     )}
-                    {b.rentalCompletedAt && Number(b.remainingRentalAmount ?? 0) > 0 && b.remainingPaymentStatus !== 'PAID' && (
-                      <>
-                        {b.remainingPaymentMethod === 'CASH' ? (
-                          <button onClick={() => handleConfirmRemainingPayment(b.id, 'CASH')} className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold">Confirm Cash Received</button>
-                        ) : (
-                          <span className="px-3 py-2 bg-blue-50 text-blue-900 border border-blue-200 rounded-xl text-xs font-bold">Awaiting Farmer Online Payment</span>
-                        )}
-                      </>
+                    {b.status === 'ACTIVE' && Number(b.remainingRentalAmount ?? 0) > 0 && b.remainingPaymentStatus !== 'PAID' && (
+                      b.remainingPaymentMethod === 'CASH' ? (
+                        <button onClick={() => handleConfirmRemainingPayment(b.id, 'CASH')} className="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold">{t('rentalPayment.confirmCash', 'Confirm Cash Received')}</button>
+                      ) : (
+                        <span className="px-3 py-2 bg-blue-50 text-blue-900 border border-blue-200 rounded-xl text-xs font-bold">{t('rentalPayment.awaitingOnline', 'Awaiting Farmer Online / UPI Payment')}</span>
+                      )
                     )}
-                    {b.rentalCompletedAt && b.remainingRentalAmount > 0 && b.remainingPaymentStatus === 'PAID' && (
+                    {b.status === 'ACTIVE' && b.remainingRentalAmount > 0 && b.remainingPaymentStatus === 'PAID' && (
                       <span className="px-3 py-2 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold">
-                        Remaining Paid {b.remainingPaymentMethod === 'RAZORPAY' ? 'Online' : b.remainingPaymentMethod}
+                        {t('rentalPayment.paid', 'Remaining Payment Paid')} ({b.remainingPaymentMethod === 'RAZORPAY' ? t('rentalPayment.online', 'Online / UPI') : b.remainingPaymentMethod})
                       </span>
                     )}
-
+                    {b.status === 'ACTIVE' && (
+                      <button onClick={() => setStopRentalBookingId(b.id)} className="px-3 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-800 rounded-xl text-xs font-bold">{t('rentalStop.confirm', 'Stop Rental')}</button>
+                    )}
                     {b.status === 'ACTIVE' && b.rentalCompletedAt && (b.remainingRentalAmount === 0 || b.remainingPaymentStatus === 'PAID') && (
-                      <button onClick={() => handleCompleteRental(b.id)} className="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold">Complete Rental</button>
+                      <button onClick={() => handleCompleteRental(b.id)} className="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold">{t('rentalCompletion.complete', 'Complete Rental')}</button>
                     )}
 
                     {b.status === 'PENDING' && (
@@ -557,7 +672,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                           Accept Booking
                         </button>
                         <button
-                          onClick={() => handleRejectBooking(b.id)}
+                          onClick={() => setRejectBookingId(b.id)}
                           className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold transition"
                         >
                           Decline
@@ -601,21 +716,23 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                   <th className="p-3.5">Farmer</th>
                   <th className="p-3.5">Net Payout (₹)</th>
                   <th className="p-3.5">Status</th>
+                  <th className="p-3.5">Receipt</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {transactions.map(txn => (
                   <tr key={txn.id} className="hover:bg-stone-50/50">
                     <td className="p-3.5 font-mono text-stone-800 font-bold">{(txn as any).invoiceNumber || txn.razorpayPaymentId || txn.id?.slice(0, 10) || txn.id}</td>
-                    <td className="p-3.5 text-stone-500">{new Date(txn.createdAt).toLocaleDateString()}</td>
-                    <td className="p-3.5 font-semibold text-stone-900">{txn.bookingId}</td>
-                    <td className="p-3.5 text-stone-600">Farmer Account</td>
-                    <td className="p-3.5 font-bold text-emerald-800">₹{txn.amount.toLocaleString('en-IN')}</td>
+                    <td className="p-3.5 text-stone-500">{formatDate(txn.createdAt)}</td>
+                    <td className="p-3.5 font-semibold text-stone-900">{txn.equipmentName || txn.bookingCode || txn.bookingId}</td>
+                    <td className="p-3.5 text-stone-600">{txn.userName || '—'}</td>
+                    <td className="p-3.5 font-bold text-emerald-800">₹{txn.ownerNetEarnings.toLocaleString('en-IN')}</td>
                     <td className="p-3.5">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
                         {txn.status}
                       </span>
                     </td>
+                    <td className="p-3.5"><button type="button" onClick={() => downloadPaymentReceipt(txn)} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-900 text-white font-bold hover:bg-stone-700"><Download className="w-3.5 h-3.5" />Download</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -690,13 +807,30 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           userRole="OWNER"
           onClose={() => setDrawerOpen(false)}
           onAcceptBooking={() => handleAcceptBooking(selectedBooking.id)}
-          onRejectBooking={() => handleRejectBooking(selectedBooking.id)}
+          onRejectBooking={(reason) => handleRejectBooking(selectedBooking.id, reason || '')}
+          onStopRental={() => setStopRentalBookingId(selectedBooking.id)}
           onRaiseDispute={() => {
             setDrawerOpen(false);
             setDisputeModalOpen(true);
           }}
           onRefresh={loadOwnerData}
         />
+      )}
+
+      {actionMessage && (
+        <div className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white max-w-md w-full rounded-2xl shadow-2xl p-6 space-y-4">
+            <h3 className="font-bold text-stone-900">{t('common.notice', 'Notice')}</h3>
+            <p className="text-sm text-stone-600 whitespace-pre-line">{actionMessage}</p>
+            <div className="flex justify-end"><button onClick={() => setActionMessage('')} className="px-4 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold">{t('common.close', 'Close')}</button></div>
+          </div>
+        </div>
+      )}
+      {stopRentalBookingId && (
+        <RentalStopModal isOpen={!!stopRentalBookingId} submitting={actionSubmitting} onClose={() => !actionSubmitting && setStopRentalBookingId(null)} onSubmit={(reason, message) => handleStopRental(stopRentalBookingId, reason, message)} />
+      )}
+      {rejectBookingId && (
+        <BookingRejectModal isOpen={!!rejectBookingId} submitting={actionSubmitting} onClose={() => !actionSubmitting && setRejectBookingId(null)} onSubmit={(reason) => handleRejectBooking(rejectBookingId, reason)} />
       )}
 
       {/* Dispute Modal */}

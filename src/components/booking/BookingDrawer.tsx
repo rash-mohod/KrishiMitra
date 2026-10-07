@@ -11,6 +11,7 @@ interface BookingDrawerProps {
   onAcceptBooking?: (notes?: string) => void;
   onRejectBooking?: (reason?: string) => void;
   onCancelBooking?: (reason: string) => void;
+  onStopRental?: () => void;
   onRaiseDispute?: () => void;
   onReview?: () => void;
   onRefresh?: () => void;
@@ -24,11 +25,17 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
   onAcceptBooking,
   onRejectBooking,
   onCancelBooking,
+  onStopRental,
   onRaiseDispute,
   onReview,
 }) => {
   const { t } = useLanguage();
   const [reason, setReason] = useState('');
+  const formatDate = (value?: string) => {
+    if (!value) return '—';
+    const match = value.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return match ? `${match[3]}-${match[2]}-${match[1]}` : value;
+  };
 
   if (!isOpen || !booking) return null;
 
@@ -36,8 +43,8 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
   const owner = userRole === 'OWNER';
   const steps: [string, boolean][] = [
     [t('booking.requested', 'Requested'), true],
-    [t('booking.ownerDecision', 'Owner decision'), ['ACCEPTED', 'ACTIVE', 'COMPLETED'].includes(booking.status)],
-    [t('booking.rentalActive', 'Rental active'), ['ACTIVE', 'COMPLETED'].includes(booking.status)],
+    [t('booking.ownerDecision', 'Owner decision'), ['PAYMENT_PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'STOPPED'].includes(booking.status)],
+    [t('booking.rentalActive', 'Rental active'), ['ACTIVE', 'COMPLETED', 'STOPPED'].includes(booking.status)],
     [t('booking.completed', 'Completed'), booking.status === 'COMPLETED'],
   ];
 
@@ -74,7 +81,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
           <div className="rounded-2xl border p-4 space-y-3">
             <h4 className="font-bold text-sm">{t('booking.rentalDetails', 'Rental Details')}</h4>
             <p className="text-xs flex gap-2">
-              <Calendar className="w-4 h-4" /> {booking.startDate} {t('common.to', 'to')} {booking.endDate} ({booking.durationDays} {t('common.days', 'days')})
+              <Calendar className="w-4 h-4" /> {formatDate(booking.startDate)} {t('common.to', 'to')} {formatDate(booking.endDate)} ({booking.durationDays} {t('common.days', 'days')})
             </p>
             <p className="text-xs flex gap-2">
               <MapPin className="w-4 h-4" /> {booking.pickupAddress || booking.equipmentLocation}
@@ -107,6 +114,19 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
               <b>{t('booking.rejectionReason', 'Rejection reason:')}</b> {booking.rejectionReason}
             </div>
           )}
+          {booking.rentalNotCompleted && (
+            <div className="bg-amber-50 rounded-xl p-4 text-xs text-amber-900">
+              <b>{t('status.rentalNotCompleted', 'Rental Not Completed')}</b> — {t('booking.rentalPeriodPassed', 'The rental period passed before the rental was started.')}
+            </div>
+          )}
+          {booking.stoppedAt && (
+            <div className="bg-red-50 rounded-xl p-4 text-xs text-red-900 space-y-1">
+              <b>{t('rentalStop.stopped', 'Rental Stopped')}</b>
+              <div>{t('rentalStop.stoppedBy', 'Stopped by')}: {booking.stoppedBy === 'OWNER' ? t('common.owner', 'Owner') : t('common.farmer', 'Farmer')}</div>
+              <div>{t('rentalStop.reasonLabel', 'Stop Rental Reason')}: {booking.stopReason}</div>
+              {booking.stopMessage && <div>{t('rentalStop.messageLabel', 'Additional message (optional)')}: {booking.stopMessage}</div>}
+            </div>
+          )}
           {booking.cancellationReason && (
             <div className="bg-red-50 rounded-xl p-4 text-xs text-red-800">
               <b>{t('booking.cancellationReason', 'Cancellation reason:')}</b> {booking.cancellationReason}
@@ -119,7 +139,7 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
               <textarea
                 value={reason}
                 onChange={e => setReason(e.target.value)}
-                placeholder={t('booking.optionalRejectionReason', 'Optional note / rejection reason')}
+                placeholder={t('booking.rejectionReasonPlaceholder', 'Reason for rejection (required)')}
                 className="w-full rounded-lg border p-2 text-xs"
                 rows={3}
               />
@@ -127,14 +147,14 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                 <button onClick={() => onAcceptBooking?.(reason || undefined)} className="px-4 py-2 rounded-lg bg-emerald-700 text-white text-xs font-bold">
                   {t('common.accept', 'Accept')}
                 </button>
-                <button onClick={() => onRejectBooking?.(reason || t('booking.defaultRejectionReason', 'Dates are not available.'))} className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-xs font-bold">
+                <button disabled={!reason.trim()} onClick={() => onRejectBooking?.(reason.trim())} className="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-xs font-bold">
                   {t('common.reject', 'Reject')}
                 </button>
               </div>
             </div>
           )}
 
-          {farmer && ['PENDING', 'ACCEPTED'].includes(booking.status) && (
+          {farmer && ['PENDING', 'PAYMENT_PENDING'].includes(booking.status) && (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-4 space-y-3">
               <h4 className="font-bold text-sm text-red-900">{t('booking.cancelBooking', 'Cancel booking')}</h4>
               <textarea
@@ -148,6 +168,12 @@ export const BookingDrawer: React.FC<BookingDrawerProps> = ({
                 {t('booking.cancelBooking', 'Cancel Booking')}
               </button>
             </div>
+          )}
+
+          {booking.status === 'ACTIVE' && onStopRental && (
+            <button onClick={onStopRental} className="w-full px-4 py-3 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-800 text-xs font-bold">
+              {t('rentalStop.confirm', 'Stop Rental')}
+            </button>
           )}
 
           <div className="flex flex-wrap gap-2">

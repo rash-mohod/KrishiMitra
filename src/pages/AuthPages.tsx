@@ -264,38 +264,38 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
   const roleMeta = {
     FARMER: {
       title: t('auth.roleFarmerTitle', 'Farmer / Renter'),
-      subtitle: t('auth.roleFarmerSub', 'Rent verified tractors & machinery on-demand with secure booking payments'),
+      subtitle: t('auth.roleFarmerSub', 'Browse agricultural equipment, check rental details, and place booking requests with clear payment information'),
       badge: t('nav.farmerPortal', 'Farmer Portal'),
       icon: User,
       benefits: [
-        t('auth.benefitFarmer1', 'Access 100+ vetted tractors, rotavators & combines locally'),
-        t('auth.benefitFarmer2', 'Transparent hourly & daily rates with zero hidden charges'),
-        t('auth.benefitFarmer3', 'Escrow protection: Funds released only after work completion'),
-        t('auth.benefitFarmer4', 'Optional verified drivers & operators on demand')
+        t('auth.benefitFarmer1', 'Browse available tractors and agricultural machinery'),
+        t('auth.benefitFarmer2', 'View equipment details, rental rates and availability'),
+        t('auth.benefitFarmer3', 'Transparent payment tracking & receipts'),
+        t('auth.benefitFarmer4', 'Contact the equipment owner when required')
       ]
     },
     OWNER: {
       title: t('auth.roleOwnerTitle', 'Equipment Owner'),
-      subtitle: t('auth.roleOwnerSub', 'List idle machinery, manage farm bookings & receive daily payouts'),
+      subtitle: t('auth.roleOwnerSub', 'List your agricultural equipment, manage booking requests, and track payments'),
       badge: t('nav.ownerPortal', 'Owner Portal'),
       icon: Tractor,
       benefits: [
-        t('auth.benefitOwner1', 'Monetize idle machinery during off-peak seasons'),
-        t('auth.benefitOwner2', 'Booking advances are processed securely through Razorpay'),
-        t('auth.benefitOwner3', 'Automated rental contracts, invoices & GPS tracking ready'),
-        t('auth.benefitOwner4', 'Zero listing fees with 95% revenue payout direct to bank')
+        t('auth.benefitOwner1', 'List agricultural equipment available for rental'),
+        t('auth.benefitOwner2', 'Review booking requests before confirming a rental'),
+        t('auth.benefitOwner3', 'Track bookings, payments and rental status'),
+        t('auth.benefitOwner4', 'Receive payment information for completed rentals')
       ]
     },
     ADMIN: {
       title: t('auth.roleAdminTitle', 'Platform Admin / Officer'),
-      subtitle: t('auth.roleAdminSub', 'Review equipment approvals, arbitrate disputes & oversee regional rentals'),
+      subtitle: t('auth.roleAdminSub', 'Manage platform operations, review equipment listings, and assist with support requests'),
       badge: t('nav.adminPortal', 'Admin Hub'),
       icon: Shield,
       benefits: [
-        t('auth.benefitAdmin1', 'Inspect and approve new machinery listings & safety tests'),
-        t('auth.benefitAdmin2', 'Real-time regional rental pricing & fleet utilization telemetry'),
-        t('auth.benefitAdmin3', 'Escrow payout releases & dispute settlement arbitration'),
-        t('auth.benefitAdmin4', 'Agriculture extension scheme & subsidy integration')
+        t('auth.benefitAdmin1', 'Review equipment listings and platform activity'),
+        t('auth.benefitAdmin2', 'Monitor bookings and payment records'),
+        t('auth.benefitAdmin3', 'Payment review and dispute support'),
+        t('auth.benefitAdmin4', 'Respond to support inquiries and manage platform records')
       ]
     }
   };
@@ -830,7 +830,7 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                   className="w-4 h-4 rounded text-emerald-700 focus:ring-emerald-500 mt-0.5"
                 />
                 <span className="text-[11px]">
-                  {t('auth.termsAgree', 'I agree to the Krishi Mitra Terms of Service, Machinery Safety Guidelines, and Escrow Security Policy.')}
+                  {t('auth.termsAgree', 'I agree to the Krishi Mitra Terms of Service, Machinery Safety Guidelines, and Payment Terms.')}
                 </span>
               </label>
 
@@ -1065,14 +1065,14 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
           <div className="bg-stone-900 text-white rounded-3xl p-6 space-y-3">
             <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
               <Shield className="w-4 h-4" />
-              <span>{t('auth.securityPromise', 'Krishi Mitra Trust & Escrow Guarantee')}</span>
+              <span>{t('auth.securityPromise', 'Krishi Mitra Trust & Payment Information')}</span>
             </div>
             <p className="text-xs text-stone-300 leading-relaxed">
-              {t('auth.securityDesc', 'Every machinery listing undergoes physical RC verification and GPS tracking validation. The booking advance is processed through Razorpay after owner approval.')}
+              {t('auth.securityDesc', 'Equipment listings are provided by registered users. Booking requests are reviewed by the equipment owner before confirmation. Online booking payments are processed through Razorpay.')}
             </p>
             <div className="pt-2 flex items-center justify-between text-[11px] text-stone-400 border-t border-stone-800">
-              <span>🇮🇳 {t('auth.govtCompliant', 'Custom Hiring Centers (CHC) Compliant')}</span>
-              <span className="text-emerald-400 font-bold">{t('auth.sslBadge', '256-Bit SSL')}</span>
+              <span>🇮🇳 {t('auth.paymentNote', 'Booking confirmation required')}</span>
+              <span className="text-emerald-400 font-bold">{t('auth.paymentSecureBadge', 'Secure online payments')}</span>
             </div>
           </div>
 
@@ -1087,13 +1087,17 @@ export const AuthPages: React.FC<AuthPagesProps> = ({
                   {t('auth.kisanHelpline', 'Kisan Support Desk')}
                 </span>
                 <span className="font-bold text-xs text-stone-900">
-                  {t('auth.tollFree', '1800-180-1551 (Toll-Free)')}
+                  {t('auth.supportPrompt', 'Need help with a booking, payment or account?')}
                 </span>
               </div>
             </div>
-            <span className="text-[10px] font-bold text-stone-600 bg-white px-2 py-1 rounded-lg border border-amber-200">
-              {t('auth.supportHours', '6 AM - 10 PM')}
-            </span>
+            <button
+              type="button"
+              onClick={() => onNavigate('/contact')}
+              className="text-[10px] font-bold text-stone-700 bg-white px-2.5 py-1.5 rounded-lg border border-amber-200 hover:bg-amber-100 transition"
+            >
+              {t('auth.contactSupport', 'Contact Support')}
+            </button>
           </div>
 
         </div>

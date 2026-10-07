@@ -214,7 +214,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
   // Calculate live authoritative price
   const priceBreakdown = bookingApi.calculatePrice(equipment, startDate, endDate, operatorIncluded);
   const isFav = favorites.includes(equipment.id);
-  const isOwnerViewer = role === 'OWNER';
+  const isOwnerViewer = role === 'OWNER' || role === 'ADMIN';
 
   const handleRequestBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -414,7 +414,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
                 <p className="text-xs text-stone-500 truncate">{equipment.district}, {equipment.state}</p>
               </div>
 
-              {role !== 'OWNER' && (
+              {role === 'FARMER' && (
                 <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -601,7 +601,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
               </div>
 
               <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-[11px] text-blue-800">
-                {t('detail.ownerNotice', 'Owner accounts can view machinery specifications and rental rates for market comparison, but cannot book or message another owner.')}
+                {t('detail.marketViewNotice', 'Owner and administrative accounts can view machinery specifications and rental rates for market comparison, but cannot book or rent this machinery.')}
               </div>
             </div>
           ) : (
@@ -775,7 +775,7 @@ export const EquipmentDetailPage: React.FC<EquipmentDetailPageProps> = ({
 
             <div className="text-[11px] text-stone-400 text-center flex items-center justify-center gap-1 pt-1">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>{t('booking.razorpayEscrowNote', 'Razorpay payment is available after the owner approves the booking')}</span>
+              <span>{t('booking.razorpayPaymentNote', 'Razorpay payment is available after the owner approves the booking')}</span>
             </div>
 
           </div>

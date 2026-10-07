@@ -481,6 +481,12 @@ export const LanguageProvider: React.FC<{
             'Cancelled'
           );
 
+        case 'EXPIRED':
+          return t('status.expired', 'Expired');
+
+        case 'STOPPED':
+          return t('status.stopped', 'Stopped');
+
         case 'PAYMENT_PENDING':
           return t(
             'status.paymentPending',

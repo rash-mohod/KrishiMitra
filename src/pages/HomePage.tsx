@@ -3,6 +3,7 @@ import { Category, Equipment } from '../types';
 import { equipmentApi } from '../services/api';
 import { EquipmentCard } from '../components/equipment/EquipmentCard';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import {
   ArrowRight,
   Calculator,
@@ -27,6 +28,7 @@ interface HomePageProps {
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipment }) => {
   const { t, translateCategory } = useLanguage();
+  const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredEquipment, setFeaturedEquipment] = useState<Equipment[]>([]);
   // Owner earnings calculator
@@ -84,13 +86,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              <button
-                onClick={() => onNavigate('/owner/equipment/add')}
-                className="px-6 py-3.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white font-bold rounded-xl border border-stone-700 transition flex items-center gap-2 text-sm"
-              >
-                <Tractor className="w-4 h-4 text-emerald-400" />
-                <span>{t('hero.listMachinery', 'List Your Machinery')}</span>
-              </button>
+              {user?.role !== 'ADMIN' && (
+                <button
+                  onClick={() => onNavigate('/owner/equipment/add')}
+                  className="px-6 py-3.5 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white font-bold rounded-xl border border-stone-700 transition flex items-center gap-2 text-sm"
+                >
+                  <Tractor className="w-4 h-4 text-emerald-400" />
+                  <span>{t('hero.listMachinery', 'List Your Machinery')}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -241,7 +245,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                 {t('home.step3Title', 'Booking Confirmation')}
               </h3>
               <p className="text-stone-600 text-xs leading-relaxed">
-                {t('home.step3Desc', 'Pay safely via UPI or cards. Payment is held in escrow and released to the owner only upon successful handover.')}
+                {t('home.step3Desc', 'Pay safely via UPI or cards. Payment records are tracked transparently through the supported payment flow.')}
               </p>
             </div>
 
@@ -279,13 +283,15 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
               </p>
 
               <div className="pt-2">
-                <button
-                  onClick={() => onNavigate('/owner/equipment/add')}
-                  className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm transition shadow-lg flex items-center gap-2"
-                >
-                  <Tractor className="w-4 h-4" />
-                  <span>{t('home.listMachinery', 'List Your Equipment Free')}</span>
-                </button>
+                {user?.role !== 'ADMIN' && (
+                  <button
+                    onClick={() => onNavigate('/owner/equipment/add')}
+                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs sm:text-sm transition shadow-lg flex items-center gap-2"
+                  >
+                    <Tractor className="w-4 h-4" />
+                    <span>{t('home.listMachinery', 'List Your Equipment Free')}</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -296,7 +302,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onSelectEquipmen
                   <Calculator className="w-4 h-4 text-emerald-400" />
                   <span>{t('home.calculatorTitle', 'Owner Earnings Estimator')}</span>
                 </h4>
-                <span className="text-[10px] text-stone-400 font-mono">{t('home.escrowSecure', 'Remaining rental paid directly to owner')}</span>
+                <span className="text-[10px] text-stone-400 font-mono">{t('home.paymentTracking', 'Remaining rental paid directly to owner')}</span>
               </div>
 
               <div>

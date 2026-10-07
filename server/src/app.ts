@@ -14,6 +14,7 @@ import favoriteRoutes from './routes/favorites.js';
 import adminRoutes from './routes/admin.js';
 import paymentRoutes from './routes/payments.js';
 import translationRoutes from './routes/translations.js';
+import inquiryRoutes from './routes/inquiries.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 
@@ -35,6 +36,7 @@ app.use('/api/disputes', disputeRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/translations', translationRoutes);
 app.use('/api/translation', translationRoutes);
 app.use('/api', (_req, res) => res.status(404).json({ success: false, message: 'The requested API endpoint does not exist.' }));
