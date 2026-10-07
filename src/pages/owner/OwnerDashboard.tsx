@@ -60,6 +60,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
   // Modals
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [disputeModalOpen, setDisputeModalOpen] = useState(false);
@@ -87,6 +88,35 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
       console.error('Failed to load owner data:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const openAddEquipmentModal = () => {
+    setEditingEquipment(null);
+    setAddModalOpen(true);
+  };
+
+  const openEditEquipmentModal = (equipment: Equipment) => {
+    setEditingEquipment(equipment);
+    setAddModalOpen(true);
+  };
+
+  const handleDeleteEquipment = async (equipment: Equipment) => {
+    if (!user) return;
+
+    const confirmed = window.confirm(
+      `Delete "${equipment.name}" from your fleet? It will be moved to Other and kept for record history.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await equipmentApi.updateEquipment(equipment.id, user.id, {
+        status: 'INACTIVE',
+        isActive: false
+      });
+      await loadOwnerData();
+    } catch (err: any) {
+      alert(err?.message || 'Unable to delete equipment.');
     }
   };
 
@@ -217,7 +247,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
             <span>{t('chat.adminSupport', 'Agri Support Desk')}</span>
           </button>
           <button
-            onClick={() => setAddModalOpen(true)}
+            onClick={openAddEquipmentModal}
             className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
           >
             <PlusCircle className="w-4 h-4" />
@@ -330,7 +360,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-stone-900 text-sm">Machinery in Your Fleet ({activeEquipmentList.length})</h3>
             <button
-              onClick={() => setAddModalOpen(true)}
+              onClick={openAddEquipmentModal}
               className="px-3 py-1.5 bg-emerald-700 text-white font-bold text-xs rounded-lg hover:bg-emerald-800 transition"
             >
               + {t('nav.addMachinery', 'Add Machinery')}
@@ -347,7 +377,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                 Start earning daily rental income from your tractors, rotavators, seeders, or combine harvesters.
               </p>
               <button
-                onClick={() => setAddModalOpen(true)}
+                onClick={openAddEquipmentModal}
                 className="px-4 py-2 bg-emerald-700 text-white font-bold rounded-xl text-xs"
               >
                 {t('addMachinery.title', 'List First Machine')}
@@ -406,12 +436,29 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                       <span>{eq.status === 'AVAILABLE' ? 'Set Maintenance' : 'Set Available'}</span>
                     </button>
 
-                    <button
-                      onClick={() => onViewEquipment(eq.id)}
-                      className="px-3 py-1.5 bg-white border border-stone-200 text-stone-700 hover:bg-stone-100 rounded-lg text-xs font-bold transition"
-                    >
-                      {t('common.viewDetails', 'View')}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEditEquipmentModal(eq)}
+                        className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition"
+                      >
+                        {t('common.edit', 'Edit')}
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteEquipment(eq)}
+                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{t('common.delete', 'Delete')}</span>
+                      </button>
+
+                      <button
+                        onClick={() => onViewEquipment(eq.id)}
+                        className="px-3 py-1.5 bg-white border border-stone-200 text-stone-700 hover:bg-stone-100 rounded-lg text-xs font-bold transition"
+                      >
+                        {t('common.viewDetails', 'View')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -623,9 +670,14 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
       <AddEquipmentModal
         categories={categories}
         isOpen={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
+        editingEquipment={editingEquipment}
+        onClose={() => {
+          setAddModalOpen(false);
+          setEditingEquipment(null);
+        }}
         onSuccess={() => {
           setAddModalOpen(false);
+          setEditingEquipment(null);
           loadOwnerData();
         }}
       />
